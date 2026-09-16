@@ -46,4 +46,19 @@ class Service extends Model
         return $this->hasMany(Incident::class);
     }
 
+    // Formato legible para el intervalo de chequeo
+    public function getFormattedIntervalAttribute(): string
+    {
+        return match ($this->check_interval) {
+            30 => '30 seg',
+            60 => '1 min',
+            300 => '5 min',
+            600 => '10 min',
+            900 => '15 min',
+            1800 => '30 min',
+            3600 => '1 hora',
+            default => "{$this->check_interval}s",
+        };
+    }
+
 }
