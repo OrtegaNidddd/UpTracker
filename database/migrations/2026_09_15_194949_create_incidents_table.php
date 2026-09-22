@@ -13,13 +13,14 @@ return new class extends Migration {
         Schema::create('incidents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('service_id')->constrained()->cascadeOnDelete();
-            $table->string('error_message')->nullable(); // Ej: "cURL error 28: Operation timed out"
-            $table->timestamp('started_at');
+            $table->enum('incident_type', ['Down', 'Degraded']);
+            $table->timestamp('started_at')->useCurrent();
             $table->timestamp('resolved_at')->nullable();
+            $table->integer('duration_seconds')->nullable();
+            $table->text('details')->nullable();
             $table->timestamps();
         });
     }
-
     /**
      * Reverse the migrations.
      */
