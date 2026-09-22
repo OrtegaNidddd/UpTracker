@@ -13,11 +13,11 @@ return new class extends Migration {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('name');                      // Ej: "API de Pagos"
-            $table->string('url');                       // Ej: "https://api.midominio.com/health"
-            $table->integer('check_interval')->default(60); // Intervalo en segundos (RF-07)
-            $table->enum('status', ['online', 'offline', 'degraded'])->default('online');
-            $table->timestamp('last_checked_at')->nullable();
+            $table->string('name');
+            $table->string('url', 2048);
+            $table->integer('interval_seconds')->default(60); 
+            $table->integer('latency_threshold_ms')->default(1000); 
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

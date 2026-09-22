@@ -13,12 +13,13 @@ return new class extends Migration {
         Schema::create('latency_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('service_id')->constrained()->cascadeOnDelete();
-            $table->integer('response_time_ms')->nullable(); // Latencia en ms (nulo si dio timeout)
-            $table->integer('status_code')->default(0);       // Código HTTP (200, 404, 500, etc.)
-            $table->timestamps();
-
-            // Índice compuesto para acelerar las consultas de los gráficos de Chart.js
-            $table->index(['service_id', 'created_at']);
+            $table->integer('latency_ms')->nullable();
+            $table->integer('http_status_code')->nullable();
+            $table->enum('status', ['Up', 'Down']);
+            $table->timestamp('checked_at')->useCurrent();
+            
+            // Índice optimizado para las gráficas del Dashboard
+            $table->index(['service_id', 'checked_at'], 'idx_latency_service_checked');
         });
     }
 
