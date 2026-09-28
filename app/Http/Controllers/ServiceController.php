@@ -11,7 +11,7 @@ class ServiceController extends Controller
     {
         // Trae los servicios del usuario con su último log de latencia registrado
         $services = auth()->user()->services()
-            ->with(['latencyLogs' => fn ($q) => $q->latest()->limit(10)])
+            ->with(['latencyLogs' => fn ($q) => $q->latest('checked_at')->limit(10)])
             ->latest()
             ->get();
 
