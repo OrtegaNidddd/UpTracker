@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -17,7 +18,7 @@ return new class extends Migration {
             $table->integer('http_status_code')->nullable();
             $table->enum('status', ['Up', 'Down']);
             $table->timestamp('checked_at')->useCurrent();
-            
+
             // Índice optimizado para las gráficas del Dashboard
             $table->index(['service_id', 'checked_at'], 'idx_latency_service_checked');
         });
