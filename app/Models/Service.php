@@ -19,18 +19,23 @@ class Service extends Model
         'name',
         'url',
         'http_method',
+        'custom_headers',
         'interval_seconds',
         'latency_threshold_ms',
         'is_active',
+        'ssl_expires_at',
+        'ssl_status',
         'check_interval',
     ];
 
     protected function casts(): array
     {
         return [
+            'custom_headers' => 'array',
             'interval_seconds' => 'integer',
             'latency_threshold_ms' => 'integer',
             'is_active' => 'boolean',
+            'ssl_expires_at' => 'datetime',
         ];
     }
 
