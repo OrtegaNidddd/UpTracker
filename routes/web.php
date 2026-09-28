@@ -13,6 +13,22 @@ Route::get('/', function () {
 // Endpoint público para página de estado de clientes (Backend JSON)
 Route::get('/status/public', PublicStatusController::class)->name('status.public');
 
+// Generador de Sitemap XML para SEO y rastreadores
+Route::get('/sitemap.xml', function () {
+    $baseUrl = url('/');
+    $lastMod = now()->toAtomString();
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>';
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+    $xml .= "<url><loc>{$baseUrl}/</loc><lastmod>{$lastMod}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>";
+    $xml .= "<url><loc>{$baseUrl}/status/public</loc><lastmod>{$lastMod}</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>";
+    $xml .= "<url><loc>{$baseUrl}/login</loc><lastmod>{$lastMod}</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>";
+    $xml .= "<url><loc>{$baseUrl}/register</loc><lastmod>{$lastMod}</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>";
+    $xml .= '</urlset>';
+
+    return response($xml, 200)->header('Content-Type', 'application/xml');
+})->name('sitemap');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     // Perfil de usuario (Breeze)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
