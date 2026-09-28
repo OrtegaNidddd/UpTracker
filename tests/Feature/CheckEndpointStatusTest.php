@@ -320,4 +320,29 @@ class CheckEndpointStatusTest extends TestCase
             return $request->method() === 'HEAD' && $request->url() === 'https://api.test/head-check';
         });
     }
+
+    public function test_job_sends_custom_headers(): void
+    {
+        $user = User::factory()->create();
+        $service = Service::factory()->create([
+            'user_id' => $user->id,
+            'url' => 'https://api.test/secure-endpoint',
+            'custom_headers' => [
+                'Authorization' => 'Bearer secret-token',
+                'X-Custom-Probe' => 'UpTracker',
+            ],
+        ]);
+
+        Http::fake([
+            'https://api.test/secure-endpoint' => Http::response(['status' => 'authorized'], 200),
+        ]);
+
+        $job = new CheckEndpointStatus($service);
+        $job->handle();
+
+        Http::assertSent(function ($request) {
+            return $request->hasHeader('Authorization', 'Bearer secret-token')
+                && $request->hasHeader('X-Custom-Probe', 'UpTracker');
+        });
+    }
 }
