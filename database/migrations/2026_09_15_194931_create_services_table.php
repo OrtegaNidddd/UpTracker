@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
@@ -15,8 +16,8 @@ return new class extends Migration {
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('url', 2048);
-            $table->integer('interval_seconds')->default(60); 
-            $table->integer('latency_threshold_ms')->default(1000); 
+            $table->integer('interval_seconds')->default(60);
+            $table->integer('latency_threshold_ms')->default(1000);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
