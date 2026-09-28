@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\PublicStatusController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServiceController;
@@ -8,6 +9,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Endpoint público para página de estado de clientes (Backend JSON)
+Route::get('/status/public', PublicStatusController::class)->name('status.public');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Perfil de usuario (Breeze)

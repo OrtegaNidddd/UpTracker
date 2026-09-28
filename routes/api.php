@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthApiController;
 use App\Http\Controllers\Api\NotificationChannelApiController;
+use App\Http\Controllers\Api\PublicStatusController;
 use App\Http\Controllers\Api\ServiceApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,15 +12,23 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Rutas centralizadas para la API RESTful de UpTracker.
 | Provee operaciones CRUD/ABM sobre servicios/URLs, canales de notificación,
-| consulta de históricos (latencias e incidentes) y autenticación vía tokens Bearer.
+| consulta de históricos (latencias e incidentes), página de estado pública
+| y autenticación vía tokens Bearer con limitación de tasa (Rate Limiting).
 */
 
-// Rutas públicas de autenticación API
-Route::post('/register', [AuthApiController::class, 'register'])->name('api.register');
-Route::post('/login', [AuthApiController::class, 'login'])->name('api.login');
+// Endpoint público de página de estado (Rate limit: 30 req/min)
+Route::get('/status/public', PublicStatusController::class)
+    ->middleware('throttle:api.public')
+    ->name('api.status.public');
 
-// Rutas protegidas mediante tokens de Sanctum
-Route::middleware('auth:sanctum')->group(function () {
+// Rutas públicas de autenticación API protegidas contra fuerza bruta (Rate limit: 10 req/min)
+Route::middleware('throttle:api.auth')->group(function () {
+    Route::post('/register', [AuthApiController::class, 'register'])->name('api.register');
+    Route::post('/login', [AuthApiController::class, 'login'])->name('api.login');
+});
+
+// Rutas protegidas mediante tokens de Sanctum (Rate limit: 60 req/min por usuario)
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Perfil y sesión
     Route::get('/user', [AuthApiController::class, 'me'])->name('api.user');
     Route::patch('/user', [AuthApiController::class, 'updateProfile'])->name('api.user.update');
