@@ -42,7 +42,11 @@ class CheckEndpointStatus implements ShouldQueue
 
         $this->handleIncidents($checkResult);
 
-        EndpointStatusUpdated::dispatch($this->service, $latencyLog);
+        try {
+            EndpointStatusUpdated::dispatch($this->service, $latencyLog);
+        } catch (Throwable) {
+            // Resguardo en caso de que el servidor Reverb esté temporalmente no disponible
+        }
     }
 
     /**
