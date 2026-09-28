@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Events\IncidentLogged;
 use App\Listeners\DispatchIncidentNotifications;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -41,5 +42,10 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api.public', function (Request $request) {
             return Limit::perMinute(30)->by($request->ip());
         });
+
+        // Registrar scheduler para que se inicie automáticamente con `php artisan dev` o `composer run dev`
+        if ($this->app->runningInConsole() && class_exists(DevCommands::class)) {
+            DevCommands::artisan('schedule:work', 'scheduler');
+        }
     }
 }
