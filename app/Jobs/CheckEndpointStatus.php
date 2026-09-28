@@ -9,6 +9,7 @@ use App\Models\Service;
 use GuzzleHttp\TransferStats;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -42,6 +43,8 @@ class CheckEndpointStatus implements ShouldQueue
 
         $this->handleIncidents($checkResult);
 
+        $this->auditSslCertificate();
+
         try {
             EndpointStatusUpdated::dispatch($this->service, $latencyLog);
         } catch (Throwable) {
@@ -71,6 +74,10 @@ class CheckEndpointStatus implements ShouldQueue
                         }
                     },
                 ]);
+
+            if (! empty($this->service->custom_headers) && is_array($this->service->custom_headers)) {
+                $request = $request->withHeaders($this->service->custom_headers);
+            }
 
             $response = match ($method) {
                 'HEAD' => $request->head($this->service->url),
@@ -175,6 +182,74 @@ class CheckEndpointStatus implements ShouldQueue
                 'resolved_at' => $resolvedAt,
                 'duration_seconds' => $durationSeconds,
             ]);
+        }
+    }
+
+    /**
+     * Inspecciona la vigencia del certificado SSL/TLS en capa de aplicación para endpoints HTTPS.
+     */
+    protected function auditSslCertificate(): void
+    {
+        if (! str_starts_with(strtolower($this->service->url), 'https://')) {
+            $this->service->updateQuietly([
+                'ssl_status' => 'None',
+                'ssl_expires_at' => null,
+            ]);
+
+            return;
+        }
+
+        $host = parse_url($this->service->url, PHP_URL_HOST);
+        $port = parse_url($this->service->url, PHP_URL_PORT) ?? 443;
+
+        if (! $host) {
+            return;
+        }
+
+        try {
+            $context = stream_context_create([
+                'ssl' => [
+                    'capture_peer_cert' => true,
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'timeout' => 5,
+                ],
+            ]);
+
+            $client = @stream_socket_client(
+                "ssl://{$host}:{$port}",
+                $errno,
+                $errstr,
+                5,
+                STREAM_CLIENT_CONNECT,
+                $context
+            );
+
+            if ($client) {
+                $params = stream_context_get_params($client);
+                fclose($client);
+
+                if (isset($params['options']['ssl']['peer_certificate'])) {
+                    $certInfo = openssl_x509_parse($params['options']['ssl']['peer_certificate']);
+                    if (isset($certInfo['validTo_time_t'])) {
+                        $expiresAt = Carbon::createFromTimestamp($certInfo['validTo_time_t']);
+                        $daysLeft = now()->diffInDays($expiresAt, false);
+
+                        $sslStatus = match (true) {
+                            $daysLeft < 0 => 'Expired',
+                            $daysLeft <= 14 => 'Expiring_Soon',
+                            default => 'Valid',
+                        };
+
+                        $this->service->updateQuietly([
+                            'ssl_expires_at' => $expiresAt,
+                            'ssl_status' => $sslStatus,
+                        ]);
+                    }
+                }
+            }
+        } catch (Throwable) {
+            // Silencioso para no interferir con el sondeo HTTP principal
         }
     }
 }

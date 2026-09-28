@@ -45,3 +45,12 @@ try {
 } catch (Throwable) {
     // Resguardo en caso de que la base de datos no esté accesible o migrada al arrancar
 }
+
+/*
+|--------------------------------------------------------------------------
+| Tarea Diaria de Purga de Logs Históricos
+|--------------------------------------------------------------------------
+| Elimina logs de latencia con más de 30 días de antigüedad para mantener
+| un rendimiento óptimo de la base de datos y cumplir el RNF de bajo consumo.
+*/
+Schedule::command('monitor:prune --days=30')->daily();
