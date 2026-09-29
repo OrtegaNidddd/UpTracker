@@ -18,7 +18,9 @@ if [ "$DB_CONNECTION" = "sqlite" ] || [ -z "$DB_CONNECTION" ]; then
     chown -R www-data:www-data /var/www/html/database
 fi
 
-# Ajustar permisos para el servidor web
+# Ajustar permisos para el servidor web y limpiar caché heredada
+rm -f /var/www/html/bootstrap/cache/*.php
+rm -f /var/www/html/public/hot
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 

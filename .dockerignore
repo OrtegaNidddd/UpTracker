@@ -16,7 +16,6 @@ phpunit.xml
 .phpunit.result.cache
 Dockerfile*
 docker-compose*.yml
-docker
 README.md
 PRUEBA.md
 CLAUDE.md
@@ -25,5 +24,8 @@ storage/logs/*
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
 database/*.sqlite
 database/*.sqlite-journal
+public/hot
