@@ -24,6 +24,10 @@ export default {
                     ice: '#EEF4FC',
                     success: '#00C48C',
                     mint: '#10B981',
+                    danger: '#EF4444',
+                    warning: '#F59E0B',
+                    info: '#00C48C',
+                    rose: '#EF4444',
                 }
             }
         },
