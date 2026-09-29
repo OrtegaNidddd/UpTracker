@@ -73,4 +73,54 @@ class ServiceWebTest extends TestCase
         $response->assertRedirect('/services');
         $this->assertDatabaseMissing('services', ['id' => $service->id]);
     }
+
+    public function test_authenticated_user_can_view_service_detail_show_page(): void
+    {
+        $user = User::factory()->create();
+        $service = Service::factory()->create([
+            'user_id' => $user->id,
+            'name' => 'Microservicio Detalle',
+            'url' => 'https://detail.example.com',
+        ]);
+
+        $response = $this->actingAs($user)->get("/services/{$service->id}");
+
+        $response->assertStatus(200);
+        $response->assertSee('Microservicio Detalle');
+        $response->assertSee('Curva de Latencia de Red');
+        $response->assertSee('Registro de Sondeos de Red');
+        $response->assertSee('Bitácora de Incidentes');
+    }
+
+    public function test_user_cannot_view_another_users_service_detail(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $service = Service::factory()->create(['user_id' => $user1->id]);
+
+        $response = $this->actingAs($user2)->get("/services/{$service->id}");
+
+        $response->assertStatus(403);
+    }
+
+    public function test_authenticated_user_can_update_service_via_web(): void
+    {
+        $user = User::factory()->create();
+        $service = Service::factory()->create(['user_id' => $user->id, 'name' => 'Original Name']);
+
+        $response = $this->actingAs($user)->put("/services/{$service->id}", [
+            'name' => 'Updated Name',
+            'url' => 'https://updated.example.com',
+            'check_interval' => 300,
+            'latency_threshold_ms' => 1200,
+            'http_method' => 'HEAD',
+        ]);
+
+        $response->assertRedirect('/services');
+        $this->assertDatabaseHas('services', [
+            'id' => $service->id,
+            'name' => 'Updated Name',
+            'http_method' => 'HEAD',
+        ]);
+    }
 }

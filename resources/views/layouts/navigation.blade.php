@@ -15,6 +15,16 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('services.index')" :active="request()->routeIs('services.*')">
+                        {{ __('Servicios') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('notification-channels.index')" :active="request()->routeIs('notification-channels.*')">
+                        {{ __('Canales de Alerta') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('status.public')" target="_blank">
+                        {{ __('Página de Estado') }}
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 inline-block"></span>
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -69,6 +79,15 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('services.index')" :active="request()->routeIs('services.*')">
+                {{ __('Servicios') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('notification-channels.index')" :active="request()->routeIs('notification-channels.*')">
+                {{ __('Canales de Alerta') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('status.public')" target="_blank">
+                {{ __('Página de Estado Pública') }} ↗
             </x-responsive-nav-link>
         </div>
 

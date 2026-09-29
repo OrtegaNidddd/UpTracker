@@ -7,13 +7,15 @@ use App\Models\Incident;
 use App\Models\LatencyLog;
 use App\Models\Service;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class PublicStatusController extends Controller
 {
     /**
      * Retorna el estado público consolidado de todos los servicios activos del sistema.
      */
-    public function __invoke(): JsonResponse
+    public function __invoke(Request $request): JsonResponse|View
     {
         $services = Service::query()
             ->where('is_active', true)
@@ -21,14 +23,24 @@ class PublicStatusController extends Controller
             ->get();
 
         if ($services->isEmpty()) {
-            return response()->json([
+            $emptyData = [
                 'status' => 'No_Services',
                 'summary' => 'No hay servicios públicos registrados actualmente.',
                 'services' => [],
                 'active_incidents' => [],
                 'resolved_incidents' => [],
                 'generated_at' => now()->toISOString(),
-            ]);
+                'total_monitored' => 0,
+                'online_count' => 0,
+                'offline_count' => 0,
+                'degraded_count' => 0,
+            ];
+
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json($emptyData);
+            }
+
+            return view('status.public', $emptyData);
         }
 
         $serviceIds = $services->pluck('id');
@@ -110,7 +122,7 @@ class PublicStatusController extends Controller
                 'duration_seconds' => $incident->duration_seconds,
             ]);
 
-        return response()->json([
+        $data = [
             'status' => $systemStatus,
             'summary' => match ($systemStatus) {
                 'Operational' => 'Todos los sistemas operando con normalidad.',
@@ -126,6 +138,12 @@ class PublicStatusController extends Controller
             'active_incidents' => $activeIncidents,
             'resolved_incidents' => $resolvedIncidents,
             'generated_at' => now()->toISOString(),
-        ]);
+        ];
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json($data);
+        }
+
+        return view('status.public', $data);
     }
 }
