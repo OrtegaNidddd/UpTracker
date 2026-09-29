@@ -15,14 +15,15 @@ if [ "$DB_CONNECTION" = "sqlite" ] || [ -z "$DB_CONNECTION" ]; then
         echo "Creando base de datos SQLite..."
         touch /var/www/html/database/database.sqlite
     fi
-    chown -R www-data:www-data /var/www/html/database
+    chown -R www-data:www-data /var/www/html/database 2>/dev/null || true
+    chmod -R 775 /var/www/html/database 2>/dev/null || true
 fi
 
 # Ajustar permisos para el servidor web y limpiar caché heredada
 rm -f /var/www/html/bootstrap/cache/*.php
 rm -f /var/www/html/public/hot
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
 # Generar APP_KEY si no está provista
 if [ -z "$APP_KEY" ]; then
