@@ -1,6 +1,20 @@
 #!/bin/sh
 set -e
 
+# Restaurar dependencias vendor si un volumen externo sobreescribió /var/www/html
+if [ ! -f /var/www/html/vendor/autoload.php ] && [ -d /opt/vendor ]; then
+    echo "Restaurando dependencias de producción (vendor) en volumen montado..."
+    mkdir -p /var/www/html/vendor
+    cp -a /opt/vendor/. /var/www/html/vendor/
+fi
+
+# Restaurar assets compilados de Vite si un volumen externo sobreescribió /var/www/html
+if [ ! -f /var/www/html/public/build/manifest.json ] && [ -d /opt/build ]; then
+    echo "Restaurando assets compilados de Vite en volumen montado..."
+    mkdir -p /var/www/html/public/build
+    cp -a /opt/build/. /var/www/html/public/build/
+fi
+
 # Asegurar directorios de almacenamiento y permisos
 mkdir -p /var/www/html/storage/framework/cache/data \
          /var/www/html/storage/framework/sessions \

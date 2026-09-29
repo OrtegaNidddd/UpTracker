@@ -81,9 +81,14 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 # Copiar código fuente de la aplicación
 COPY . .
 
-# Copiar artefactos de Composer (Stage 2) y Vite (Stage 1)
+# Copiar binario de Composer
+COPY --from=composer-builder /usr/bin/composer /usr/bin/composer
+
+# Copiar artefactos de Composer (Stage 2) y Vite (Stage 1) a la aplicación y a /opt como respaldo
 COPY --from=composer-builder /app/vendor /var/www/html/vendor
+COPY --from=composer-builder /app/vendor /opt/vendor
 COPY --from=frontend-builder /app/public/build /var/www/html/public/build
+COPY --from=frontend-builder /app/public/build /opt/build
 
 # Optimizar estructura de almacenamiento y permisos
 RUN mkdir -p /var/www/html/storage/logs \
