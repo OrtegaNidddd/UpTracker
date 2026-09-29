@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\PublicStatusController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationChannelController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Route;
@@ -35,13 +36,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Módulo UpTracker
+    // Módulo UpTracker - Servicios
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
     Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
     Route::get('/services/{service}', [ServiceController::class, 'show'])->name('services.show');
     Route::put('/services/{service}', [ServiceController::class, 'update'])->name('services.update');
     Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
+
+    // Módulo UpTracker - Canales de Alerta
+    Route::get('/notification-channels', [NotificationChannelController::class, 'index'])->name('notification-channels.index');
+    Route::post('/notification-channels', [NotificationChannelController::class, 'store'])->name('notification-channels.store');
+    Route::put('/notification-channels/{notification_channel}', [NotificationChannelController::class, 'update'])->name('notification-channels.update');
+    Route::patch('/notification-channels/{notification_channel}/toggle', [NotificationChannelController::class, 'toggle'])->name('notification-channels.toggle');
+    Route::delete('/notification-channels/{notification_channel}', [NotificationChannelController::class, 'destroy'])->name('notification-channels.destroy');
 });
 
 require __DIR__.'/auth.php';
