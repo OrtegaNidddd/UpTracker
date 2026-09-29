@@ -8,9 +8,9 @@ if [ ! -f /var/www/html/vendor/autoload.php ] && [ -d /opt/vendor ]; then
     cp -a /opt/vendor/. /var/www/html/vendor/
 fi
 
-# Restaurar assets compilados de Vite si un volumen externo sobreescribió /var/www/html
-if [ ! -f /var/www/html/public/build/manifest.json ] && [ -d /opt/build ]; then
-    echo "Restaurando assets compilados de Vite en volumen montado..."
+# Sincronizar assets compilados de Vite (garantiza siempre la última versión compilada)
+if [ -d /opt/build ]; then
+    echo "Sincronizando assets compilados de Vite en volumen montado..."
     mkdir -p /var/www/html/public/build
     cp -a /opt/build/. /var/www/html/public/build/
 fi
