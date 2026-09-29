@@ -68,6 +68,14 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         gd \
         intl
 
+# Preparar directorios de Nginx con permisos abiertos
+RUN mkdir -p /var/lib/nginx/tmp/client_body \
+             /var/lib/nginx/logs \
+             /var/log/nginx \
+             /run/nginx \
+             /tmp/client_body \
+    && chmod -R 777 /var/lib/nginx /var/log/nginx /run/nginx /tmp/client_body
+
 WORKDIR /var/www/html
 
 # Copiar configuraciones de Nginx, PHP y Supervisor

@@ -39,6 +39,18 @@ rm -f /var/www/html/public/hot
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
+# Asegurar directorios y permisos para Nginx en entornos rootless
+mkdir -p /tmp/client_body \
+         /tmp/fastcgi_temp \
+         /tmp/proxy_temp \
+         /tmp/uwsgi_temp \
+         /tmp/scgi_temp \
+         /var/lib/nginx/tmp/client_body \
+         /var/lib/nginx/logs \
+         /var/log/nginx \
+         /run/nginx 2>/dev/null || true
+chmod -R 777 /tmp/client_body /tmp/fastcgi_temp /tmp/proxy_temp /tmp/uwsgi_temp /tmp/scgi_temp /var/lib/nginx /var/log/nginx /run/nginx 2>/dev/null || true
+
 # Generar APP_KEY si no está provista
 if [ -z "$APP_KEY" ]; then
     echo "APP_KEY no detectada. Generando llave de cifrado..."
