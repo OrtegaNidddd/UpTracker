@@ -49,15 +49,24 @@ class ServiceController extends Controller
         abort_if((int) $service->user_id !== (int) auth()->id(), 403);
 
         $service->load([
-            'latencyLogs' => fn ($q) => $q->latest('checked_at')->limit(30),
-            'incidents' => fn ($q) => $q->latest('started_at')->limit(10),
+            'latencyLogs' => fn ($q) => $q->latest('checked_at')->limit(50),
+            'incidents' => fn ($q) => $q->latest('started_at')->limit(15),
         ]);
 
         if (request()->wantsJson()) {
             return response()->json($service);
         }
 
-        return view('services.show', compact('service'));
+        $twentyFourHoursAgo = now()->subHours(24);
+        $totalChecks = $service->latencyLogs()->where('checked_at', '>=', $twentyFourHoursAgo)->count();
+        $upChecks = $service->latencyLogs()->where('checked_at', '>=', $twentyFourHoursAgo)->where('status', 'Up')->count();
+        $service->uptime_24h = $totalChecks > 0 ? round(($upChecks / $totalChecks) * 100, 2) : 100.0;
+
+        $chronologicalLogs = $service->latencyLogs->reverse()->values();
+        $chartLabels = $chronologicalLogs->map(fn ($log) => $log->checked_at?->format('H:i:s') ?? '')->all();
+        $chartData = $chronologicalLogs->map(fn ($log) => $log->latency_ms ?? 0)->all();
+
+        return view('services.show', compact('service', 'chartLabels', 'chartData'));
     }
 
     public function update(Request $request, Service $service)
