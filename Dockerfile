@@ -39,6 +39,7 @@ FROM php:8.3-fpm-alpine AS runner
 
 # Instalar dependencias del sistema y herramientas de servidor
 RUN apk add --no-cache \
+    ca-certificates \
     nginx \
     supervisor \
     curl \
@@ -51,7 +52,8 @@ RUN apk add --no-cache \
     freetype-dev \
     icu-dev \
     oniguruma-dev \
-    linux-headers
+    linux-headers \
+    && update-ca-certificates
 
 # Instalar extensiones de PHP necesarias para Laravel y Reverb
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
