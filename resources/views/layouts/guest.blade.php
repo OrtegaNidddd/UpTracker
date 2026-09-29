@@ -72,8 +72,12 @@
 
         <!-- Footer -->
         <footer class="w-full max-w-7xl mx-auto px-6 py-5 text-center text-xs text-brand-muted">
-            &copy; {{ date('Y') }} UpTracker &bull; Monitoreo de Disponibilidad y Servicios
+            &copy; {{ date('Y') }} UpTracker &bull; Monitoreo de Disponibilidad y Servicios &bull; Cumplimiento Ley 1581 de 2012
         </footer>
+
+        <!-- Notificaciones y Cookies -->
+        <x-toast-notification />
+        <x-cookie-banner />
     </body>
 
         <!-- Script de red de partículas interactivas -->
