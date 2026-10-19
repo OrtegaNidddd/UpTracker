@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Incident;
 use App\Models\LatencyLog;
 use App\Models\Service;
+use App\Services\SlaService;
 use Illuminate\Http\JsonResponse;
 
 class PublicStatusController extends Controller
@@ -45,6 +46,11 @@ class PublicStatusController extends Controller
         $activeServicesData = [];
         $offlineCount = 0;
         $degradedCount = 0;
+        $slaCompliantCount = 0;
+        $slaAtRiskCount = 0;
+        $slaBreachedCount = 0;
+
+        $slaService = app(SlaService::class);
 
         foreach ($services as $service) {
             $stats = $uptimeStats->get($service->id);
@@ -62,6 +68,13 @@ class PublicStatusController extends Controller
                 $degradedCount++;
             }
 
+            $sla = $slaService->calculateSla($service, 30);
+            match ($sla['status']) {
+                'Cumple' => $slaCompliantCount++,
+                'En riesgo' => $slaAtRiskCount++,
+                default => $slaBreachedCount++,
+            };
+
             $activeServicesData[] = [
                 'id' => $service->id,
                 'name' => $service->name,
@@ -69,6 +82,15 @@ class PublicStatusController extends Controller
                 'uptime_24h' => $uptime,
                 'ssl_status' => $service->ssl_status ?? 'None',
                 'last_checked_at' => $service->last_checked_at?->toISOString(),
+                'sla' => [
+                    'status' => $sla['status'],
+                    'slo_availability_target' => $sla['slo_availability_target'],
+                    'slo_latency_target_ms' => $sla['slo_latency_target_ms'],
+                    'uptime_sli' => $sla['uptime_sli'],
+                    'avg_latency_ms' => $sla['avg_latency_ms'],
+                    'error_budget_percentage' => $sla['error_budget_percentage'],
+                    'message' => $sla['message'],
+                ],
             ];
         }
 
@@ -122,6 +144,12 @@ class PublicStatusController extends Controller
             'online_count' => $totalCount - $offlineCount - $degradedCount,
             'offline_count' => $offlineCount,
             'degraded_count' => $degradedCount,
+            'sla_summary' => [
+                'compliant_count' => $slaCompliantCount,
+                'at_risk_count' => $slaAtRiskCount,
+                'breached_count' => $slaBreachedCount,
+                'overall_compliance_rate' => $totalCount > 0 ? round(($slaCompliantCount / $totalCount) * 100, 2) : 100.0,
+            ],
             'services' => $activeServicesData,
             'active_incidents' => $activeIncidents,
             'resolved_incidents' => $resolvedIncidents,

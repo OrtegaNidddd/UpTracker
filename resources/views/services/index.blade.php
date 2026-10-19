@@ -61,6 +61,7 @@
                                 <th class="p-4">Nombre</th>
                                 <th class="p-4">URL / Endpoint</th>
                                 <th class="p-4">Intervalo</th>
+                                <th class="p-4">Nivel SLA</th>
                                 <th class="p-4">Última Revisión</th>
                                 <th class="p-4 text-right">Acciones</th>
                             </tr>
@@ -83,14 +84,27 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td class="p-4 font-semibold text-brand-dark">{{ $service->name }}</td>
+                                    <td class="p-4 font-semibold text-brand-dark">
+                                        <a href="{{ route('services.show', $service) }}" class="hover:text-brand-primary">
+                                            {{ $service->name }}
+                                        </a>
+                                    </td>
                                     <td class="p-4 font-mono text-xs text-brand-muted truncate max-w-xs">{{ $service->url }}</td>
                                     <td class="p-4 text-brand-slate font-medium">{{ $service->formatted_interval }}</td>
+                                    <td class="p-4">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase {{ $service->sla_status === 'Cumple' ? 'bg-emerald-100 text-emerald-800' : ($service->sla_status === 'En riesgo' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800') }}">
+                                            {{ $service->sla_status ?? 'Cumple' }}
+                                        </span>
+                                        <span class="block text-[10px] text-slate-400 mt-0.5">SLO: {{ $service->slo_availability_target ?? 99.0 }}%</span>
+                                    </td>
                                     <td class="p-4 text-slate-400 text-xs">
                                         {{ $service->last_checked_at ? $service->last_checked_at->diffForHumans() : 'Pendiente' }}
                                     </td>
-                                    <td class="p-4 text-right">
-                                        <form method="POST" action="{{ route('services.destroy', $service) }}" onsubmit="return confirm('¿Deseas eliminar este servicio?')">
+                                    <td class="p-4 text-right space-x-2">
+                                        <a href="{{ route('services.show', $service) }}" class="text-brand-primary hover:underline text-xs font-semibold">
+                                            Ver Auditoría SLA
+                                        </a>
+                                        <form method="POST" action="{{ route('services.destroy', $service) }}" class="inline-block" onsubmit="return confirm('¿Deseas eliminar este servicio?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-rose-500 hover:text-rose-700 text-xs font-semibold">
@@ -101,7 +115,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="p-8 text-center text-brand-muted">
+                                    <td colspan="7" class="p-8 text-center text-brand-muted">
                                         No tienes endpoints registrados todavía. Dale a "+ Nuevo Servicio" para comenzar a monitorear.
                                     </td>
                                 </tr>
@@ -114,15 +128,15 @@
         </div>
     </div>
 
-    <!-- 3. Modal de Registro de Servicio (RF-01) -->
+    <!-- 3. Modal de Registro de Servicio (RF-01 con SLOs) -->
     <x-modal name="new-service-modal" :show="$errors->isNotEmpty()" focusable>
         <form method="POST" action="{{ route('services.store') }}" class="p-6">
             @csrf
             <h2 class="text-lg font-bold text-brand-dark">
-                Registrar Nuevo Endpoint
+                Registrar Nuevo Endpoint & Objetivos SLA
             </h2>
             <p class="mt-1 text-sm text-brand-muted">
-                Ingresa los datos del microservicio o API que quieres supervisar.
+                Ingresa los datos del microservicio o API que quieres supervisar y sus acuerdos de nivel de servicio.
             </p>
 
             <div class="mt-6 space-y-4">
@@ -138,20 +152,50 @@
                     <x-input-error :messages="$errors->get('url')" class="mt-2" />
                 </div>
 
-                <div>
-                    <x-input-label for="check_interval" value="Intervalo de Chequeo" class="text-brand-slate" />
-                    <select id="check_interval" name="check_interval" class="mt-1 block w-full border-gray-300 focus:border-brand-primary focus:ring-brand-primary rounded-md shadow-sm text-sm text-brand-dark" required>
-                        <option value="30" @selected(old('check_interval') == 30)>Cada 30 segundos</option>
-                        <option value="60" @selected(old('check_interval', 60) == 60)>Cada 1 minuto (Recomendado)</option>
-                        <option value="300" @selected(old('check_interval') == 300)>Cada 5 minutos</option>
-                        <option value="600" @selected(old('check_interval') == 600)>Cada 10 minutos</option>
-                        <option value="900" @selected(old('check_interval') == 900)>Cada 15 minutos</option>
-                        <option value="1800" @selected(old('check_interval') == 1800)>Cada 30 minutos</option>
-                        <option value="3600" @selected(old('check_interval') == 3600)>Cada 1 hora</option>
-                    </select>
-                    <x-input-error :messages="$errors->get('check_interval')" class="mt-2" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <x-input-label for="check_interval" value="Intervalo de Chequeo" class="text-brand-slate" />
+                        <select id="check_interval" name="check_interval" class="mt-1 block w-full border-gray-300 focus:border-brand-primary focus:ring-brand-primary rounded-md shadow-sm text-sm text-brand-dark" required>
+                            <option value="30" @selected(old('check_interval') == 30)>Cada 30 segundos</option>
+                            <option value="60" @selected(old('check_interval', 60) == 60)>Cada 1 minuto (Recomendado)</option>
+                            <option value="300" @selected(old('check_interval') == 300)>Cada 5 minutos</option>
+                            <option value="600" @selected(old('check_interval') == 600)>Cada 10 minutos</option>
+                            <option value="900" @selected(old('check_interval') == 900)>Cada 15 minutos</option>
+                            <option value="1800" @selected(old('check_interval') == 1800)>Cada 30 minutos</option>
+                            <option value="3600" @selected(old('check_interval') == 3600)>Cada 1 hora</option>
+                        </select>
+                        <x-input-error :messages="$errors->get('check_interval')" class="mt-2" />
+                    </div>
+
+                    <div>
+                        <x-input-label for="http_method" value="Método HTTP" class="text-brand-slate" />
+                        <select id="http_method" name="http_method" class="mt-1 block w-full border-gray-300 focus:border-brand-primary focus:ring-brand-primary rounded-md shadow-sm text-sm text-brand-dark">
+                            <option value="GET">GET</option>
+                            <option value="HEAD">HEAD</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Configuración SLA / SLO -->
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Objetivos de Nivel de Servicio (SLO)</h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <x-input-label for="slo_availability_target" value="SLO Disponibilidad (%)" class="text-brand-slate text-xs" />
+                            <x-text-input id="slo_availability_target" name="slo_availability_target" type="number" step="0.01" min="50" max="100" class="mt-1 block w-full text-xs" :value="old('slo_availability_target', '99.00')" required />
+                            <span class="text-[10px] text-slate-400">Meta deseada (ej: 99.0% o 99.9%)</span>
+                            <x-input-error :messages="$errors->get('slo_availability_target')" class="mt-1" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="slo_latency_target_ms" value="SLO Latencia Máx (ms)" class="text-brand-slate text-xs" />
+                            <x-text-input id="slo_latency_target_ms" name="slo_latency_target_ms" type="number" min="10" max="30000" class="mt-1 block w-full text-xs" :value="old('slo_latency_target_ms', '500')" required />
+                            <span class="text-[10px] text-slate-400">Rendimiento esperado (ej: 500 ms)</span>
+                            <x-input-error :messages="$errors->get('slo_latency_target_ms')" class="mt-1" />
+                        </div>
+                    </div>
+                </div>
 
             <div class="mt-6 flex justify-end gap-3">
                 <x-secondary-button x-on:click="$dispatch('close')">

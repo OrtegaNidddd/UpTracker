@@ -26,6 +26,10 @@ class Service extends Model
         'ssl_expires_at',
         'ssl_status',
         'check_interval',
+        'slo_availability_target',
+        'slo_latency_target_ms',
+        'sla_status',
+        'error_budget_percentage',
     ];
 
     protected function casts(): array
@@ -36,6 +40,9 @@ class Service extends Model
             'latency_threshold_ms' => 'integer',
             'is_active' => 'boolean',
             'ssl_expires_at' => 'datetime',
+            'slo_availability_target' => 'float',
+            'slo_latency_target_ms' => 'integer',
+            'error_budget_percentage' => 'float',
         ];
     }
 
@@ -68,6 +75,11 @@ class Service extends Model
     public function openIncident(): HasOne
     {
         return $this->hasOne(Incident::class)->whereNull('resolved_at');
+    }
+
+    public function slaHistories(): HasMany
+    {
+        return $this->hasMany(SlaHistory::class);
     }
 
     /**

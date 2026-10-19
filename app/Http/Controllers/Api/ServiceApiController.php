@@ -43,6 +43,8 @@ class ServiceApiController extends Controller
             'custom_headers.*' => ['string', 'max:500'],
             'interval_seconds' => ['required', 'integer', 'in:10,15,20,30,60,120,300,600,900,1800,3600'],
             'latency_threshold_ms' => ['nullable', 'integer', 'min:50', 'max:60000'],
+            'slo_availability_target' => ['nullable', 'numeric', 'min:50', 'max:100'],
+            'slo_latency_target_ms' => ['nullable', 'integer', 'min:10', 'max:30000'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -89,6 +91,8 @@ class ServiceApiController extends Controller
             'custom_headers.*' => ['string', 'max:500'],
             'interval_seconds' => ['sometimes', 'required', 'integer', 'in:10,15,20,30,60,120,300,600,900,1800,3600'],
             'latency_threshold_ms' => ['nullable', 'integer', 'min:50', 'max:60000'],
+            'slo_availability_target' => ['nullable', 'numeric', 'min:50', 'max:100'],
+            'slo_latency_target_ms' => ['nullable', 'integer', 'min:10', 'max:30000'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
