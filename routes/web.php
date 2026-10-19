@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\PublicStatusController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationChannelWebController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +43,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/services/{service}', [ServiceController::class, 'show'])->name('services.show');
     Route::put('/services/{service}', [ServiceController::class, 'update'])->name('services.update');
     Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
+
+    // Módulo de Canales de Alerta y Notificación (Correo, Discord, Telegram)
+    Route::get('/notification-channels', [NotificationChannelWebController::class, 'index'])->name('notification-channels.index');
+    Route::post('/notification-channels', [NotificationChannelWebController::class, 'store'])->name('notification-channels.store');
+    Route::patch('/notification-channels/{notificationChannel}', [NotificationChannelWebController::class, 'update'])->name('notification-channels.update');
+    Route::delete('/notification-channels/{notificationChannel}', [NotificationChannelWebController::class, 'destroy'])->name('notification-channels.destroy');
+    Route::post('/notification-channels/{notificationChannel}/test', [NotificationChannelWebController::class, 'test'])->name('notification-channels.test');
 });
 
 require __DIR__.'/auth.php';
