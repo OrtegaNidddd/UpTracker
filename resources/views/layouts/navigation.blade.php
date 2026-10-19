@@ -13,7 +13,16 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
+                        {{ __('Dashboard & SLA') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('services.index')" :active="request()->routeIs('services.*')">
+                        {{ __('Endpoints') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('notification-channels.index')" :active="request()->routeIs('notification-channels.*')">
+                        {{ __('Canales de Alerta') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('status.page')" target="_blank">
+                        {{ __('Página de Estado ↗') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -68,7 +77,16 @@
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
+                {{ __('Dashboard & SLA') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('services.index')" :active="request()->routeIs('services.*')">
+                {{ __('Endpoints') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('notification-channels.index')" :active="request()->routeIs('notification-channels.*')">
+                {{ __('Canales de Alerta') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('status.page')" target="_blank">
+                {{ __('Página de Estado ↗') }}
             </x-responsive-nav-link>
         </div>
 
