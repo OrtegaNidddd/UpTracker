@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LatencyLog;
+use App\Services\SlaService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
@@ -39,7 +40,12 @@ class DashboardController extends Controller
             ->get()
             ->keyBy('service_id');
 
-        // 3. Procesar métricas e histórico de 50 registros por servicio para Chart.js
+        $slaService = app(SlaService::class);
+        $slaCompliantCount = 0;
+        $slaAtRiskCount = 0;
+        $slaBreachedCount = 0;
+
+        // 3. Procesar métricas e histórico de 50 registros por servicio para Chart.js y SLA
         foreach ($services as $service) {
             $stats = $uptimeStats->get($service->id);
             $totalChecks = $stats ? (int) $stats->total_checks : 0;
@@ -48,6 +54,17 @@ class DashboardController extends Controller
             $service->uptime_24h = $totalChecks > 0
                 ? round(($upChecks / $totalChecks) * 100, 2)
                 : 100.0;
+
+            // Análisis y cálculo SLA/SLO (30 días)
+            $sla = $slaService->calculateSla($service, 30);
+            $service->sla = $sla;
+            $service->sla_trend = $slaService->getHistoricalTrend($service, 7);
+
+            match ($sla['status']) {
+                'Cumple' => $slaCompliantCount++,
+                'En riesgo' => $slaAtRiskCount++,
+                default => $slaBreachedCount++,
+            };
 
             // Obtener los 50 logs más recientes ordenados cronológicamente (antiguo -> reciente)
             $recentLogs = $service->latencyLogs()
@@ -69,6 +86,13 @@ class DashboardController extends Controller
             )->all();
         }
 
-        return view('dashboard', compact('services'));
+        $slaSummary = [
+            'compliant' => $slaCompliantCount,
+            'at_risk' => $slaAtRiskCount,
+            'breached' => $slaBreachedCount,
+            'overall_rate' => $services->count() > 0 ? round(($slaCompliantCount / $services->count()) * 100, 1) : 100.0,
+        ];
+
+        return view('dashboard', compact('services', 'slaSummary'));
     }
 }

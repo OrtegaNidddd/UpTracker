@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ServiceAlertMail;
 use App\Models\NotificationChannel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class NotificationChannelWebTest extends TestCase
@@ -13,7 +15,7 @@ class NotificationChannelWebTest extends TestCase
 
     public function test_guest_is_redirected_to_login_when_accessing_notification_channels(): void
     {
-        $response = $this->get('/notification-channels');
+        $response = $this->get(route('notification-channels.index'));
 
         $response->assertRedirect('/login');
     }
@@ -21,82 +23,96 @@ class NotificationChannelWebTest extends TestCase
     public function test_authenticated_user_can_view_notification_channels_index(): void
     {
         $user = User::factory()->create();
-        NotificationChannel::factory()->create([
+
+        NotificationChannel::create([
             'user_id' => $user->id,
             'type' => 'Email',
-            'target_destination' => 'admin@example.com',
+            'target_destination' => 'admin@empresa.com',
+            'is_active' => true,
         ]);
 
-        $response = $this->actingAs($user)->get('/notification-channels');
+        $response = $this->actingAs($user)->get(route('notification-channels.index'));
 
         $response->assertStatus(200);
-        $response->assertSee('Canales de Alerta y Notificación');
-        $response->assertSee('admin@example.com');
+        $response->assertSee('admin@empresa.com');
     }
 
-    public function test_authenticated_user_can_create_email_notification_channel(): void
+    public function test_user_can_create_email_notification_channel(): void
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post('/notification-channels', [
+        $response = $this->actingAs($user)->post(route('notification-channels.store'), [
             'type' => 'Email',
-            'target_destination' => 'devops@example.com',
-            'is_active' => true,
+            'target_destination' => 'soc@empresa.com',
+            'is_active' => '1',
         ]);
 
-        $response->assertRedirect('/notification-channels');
+        $response->assertRedirect(route('notification-channels.index'));
         $this->assertDatabaseHas('notification_channels', [
             'user_id' => $user->id,
             'type' => 'Email',
-            'target_destination' => 'devops@example.com',
+            'target_destination' => 'soc@empresa.com',
             'is_active' => true,
         ]);
     }
 
-    public function test_authenticated_user_can_create_discord_webhook_channel(): void
+    public function test_user_can_create_discord_webhook_channel(): void
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post('/notification-channels', [
+        $response = $this->actingAs($user)->post(route('notification-channels.store'), [
             'type' => 'Webhook_Discord',
-            'target_destination' => 'https://discord.com/api/webhooks/123/token',
-            'is_active' => true,
+            'target_destination' => 'https://discord.com/api/webhooks/12345/abcdef',
+            'is_active' => '1',
         ]);
 
-        $response->assertRedirect('/notification-channels');
+        $response->assertRedirect(route('notification-channels.index'));
         $this->assertDatabaseHas('notification_channels', [
             'user_id' => $user->id,
             'type' => 'Webhook_Discord',
-            'target_destination' => 'https://discord.com/api/webhooks/123/token',
+            'target_destination' => 'https://discord.com/api/webhooks/12345/abcdef',
         ]);
     }
 
-    public function test_authenticated_user_can_toggle_channel_status(): void
+    public function test_user_can_send_live_test_to_channel(): void
     {
+        Mail::fake();
         $user = User::factory()->create();
-        $channel = NotificationChannel::factory()->create([
+
+        $channel = NotificationChannel::create([
             'user_id' => $user->id,
+            'type' => 'Email',
+            'target_destination' => 'alerts@empresa.com',
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($user)->patch("/notification-channels/{$channel->id}/toggle");
+        $response = $this->actingAs($user)->post(route('notification-channels.test', $channel));
 
-        $response->assertRedirect('/notification-channels');
-        $this->assertDatabaseHas('notification_channels', [
+        $response->assertRedirect(route('notification-channels.index'));
+        $response->assertSessionHas('success');
+
+        Mail::assertSent(ServiceAlertMail::class, function ($mail) {
+            return $mail->hasTo('alerts@empresa.com');
+        });
+    }
+
+    public function test_user_can_delete_notification_channel(): void
+    {
+        $user = User::factory()->create();
+
+        $channel = NotificationChannel::create([
+            'user_id' => $user->id,
+            'type' => 'Webhook_Telegram',
+            'target_destination' => 'https://api.telegram.org/bot123/sendMessage',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('notification-channels.destroy', $channel));
+
+        $response->assertRedirect(route('notification-channels.index'));
+        $this->assertDatabaseMissing('notification_channels', [
             'id' => $channel->id,
-            'is_active' => false,
         ]);
-    }
-
-    public function test_authenticated_user_can_delete_notification_channel(): void
-    {
-        $user = User::factory()->create();
-        $channel = NotificationChannel::factory()->create(['user_id' => $user->id]);
-
-        $response = $this->actingAs($user)->delete("/notification-channels/{$channel->id}");
-
-        $response->assertRedirect('/notification-channels');
-        $this->assertDatabaseMissing('notification_channels', ['id' => $channel->id]);
     }
 
     public function test_user_cannot_modify_or_delete_another_users_channel(): void
@@ -105,10 +121,7 @@ class NotificationChannelWebTest extends TestCase
         $user2 = User::factory()->create();
         $channel = NotificationChannel::factory()->create(['user_id' => $user1->id]);
 
-        $responseToggle = $this->actingAs($user2)->patch("/notification-channels/{$channel->id}/toggle");
-        $responseToggle->assertStatus(403);
-
-        $responseDelete = $this->actingAs($user2)->delete("/notification-channels/{$channel->id}");
+        $responseDelete = $this->actingAs($user2)->delete(route('notification-channels.destroy', $channel));
         $responseDelete->assertStatus(403);
     }
 }

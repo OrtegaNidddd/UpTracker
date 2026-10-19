@@ -8,7 +8,7 @@
                     </svg>
                     Gestión de Servicios y Endpoints
                 </h2>
-                <p class="text-xs text-brand-muted mt-1">Configura y administra las URLs supervisadas, métodos HTTP, intervalos y umbrales de latencia.</p>
+                <p class="text-xs text-brand-muted mt-1">Configura y administra las URLs supervisadas, métodos HTTP, intervalos y objetivos de nivel de servicio (SLO).</p>
             </div>
 
             <div class="flex items-center gap-2">
@@ -42,7 +42,9 @@
                 url: '',
                 check_interval: 60,
                 http_method: 'GET',
-                latency_threshold_ms: 1000
+                latency_threshold_ms: 1000,
+                slo_availability_target: 99.00,
+                slo_latency_target_ms: 500
             },
             openEdit(service) {
                 this.editingService = {
@@ -51,7 +53,9 @@
                     url: service.url,
                     check_interval: service.interval_seconds || service.check_interval || 60,
                     http_method: service.http_method || 'GET',
-                    latency_threshold_ms: service.latency_threshold_ms || 1000
+                    latency_threshold_ms: service.latency_threshold_ms || 1000,
+                    slo_availability_target: service.slo_availability_target || 99.00,
+                    slo_latency_target_ms: service.slo_latency_target_ms || 500
                 };
                 $dispatch('open-modal', 'edit-service-modal');
             }
@@ -80,7 +84,7 @@
                 <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
                         <h3 class="font-bold text-lg text-brand-dark">Endpoints Web Supervisados</h3>
-                        <p class="text-xs text-brand-muted">Gestión integral de sondeos periódicos y umbrales de alerta</p>
+                        <p class="text-xs text-brand-muted">Gestión integral de sondeos periódicos, umbrales de alerta y acuerdos SLO</p>
                     </div>
                     <span class="text-xs text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full font-medium">
                         {{ $services->count() }} endpoints activos
@@ -95,6 +99,7 @@
                                 <th class="p-4">Nombre</th>
                                 <th class="p-4">URL / Endpoint</th>
                                 <th class="p-4">Método & Frecuencia</th>
+                                <th class="p-4">Nivel SLA / SLO</th>
                                 <th class="p-4">Última Revisión</th>
                                 <th class="p-4 text-right">Acciones</th>
                             </tr>
@@ -137,6 +142,12 @@
                                         <span class="inline-block px-1.5 py-0.5 rounded font-mono text-[11px] bg-slate-100 text-slate-700 font-semibold">{{ $service->http_method ?? 'GET' }}</span>
                                         <span class="text-xs text-slate-500 font-medium ml-1.5">{{ $service->formatted_interval }}</span>
                                     </td>
+                                    <td class="p-4">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase {{ $service->sla_status === 'Cumple' ? 'bg-emerald-100 text-emerald-800' : ($service->sla_status === 'En riesgo' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800') }}">
+                                            {{ $service->sla_status ?? 'Cumple' }}
+                                        </span>
+                                        <span class="block text-[10px] text-slate-400 mt-0.5">SLO: {{ $service->slo_availability_target ?? 99.00 }}%</span>
+                                    </td>
                                     <td class="p-4 text-slate-400 text-xs">
                                         {{ $service->last_checked_at ? $service->last_checked_at->diffForHumans() : 'Pendiente' }}
                                     </td>
@@ -171,7 +182,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="p-12 text-center">
+                                    <td colspan="7" class="p-12 text-center">
                                         <div class="max-w-sm mx-auto space-y-3">
                                             <div class="w-14 h-14 rounded-2xl bg-blue-50 text-brand-primary mx-auto flex items-center justify-center">
                                                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
@@ -200,20 +211,20 @@
             <form 
                 method="POST" 
                 x-bind:action="'/services/' + editingService.id" 
-                class="p-6 text-xs"
+                class="p-6 text-xs space-y-4"
                 x-data="{ saving: false }"
                 @submit="saving = true"
             >
                 @csrf
                 @method('PUT')
                 <h2 class="text-lg font-bold text-brand-dark">
-                    Editar Endpoint
+                    Editar Endpoint & Objetivos SLA
                 </h2>
                 <p class="mt-1 text-xs text-brand-muted">
-                    Modifica los parámetros de supervisión del servicio seleccionado.
+                    Modifica los parámetros de supervisión y umbrales de nivel de servicio.
                 </p>
 
-                <div class="mt-5 space-y-4">
+                <div class="space-y-4">
                     <div>
                         <x-input-label for="edit_modal_name" value="Nombre del Servicio" class="font-semibold text-slate-700" />
                         <input id="edit_modal_name" name="name" type="text" x-model="editingService.name" class="mt-1 block w-full rounded-lg border-slate-300 text-xs focus:border-brand-primary focus:ring-brand-primary" required />
@@ -247,6 +258,23 @@
                         </div>
                     </div>
 
+                    <!-- Configuración SLA / SLO -->
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Objetivos de Nivel de Servicio (SLO)</h4>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="edit_modal_slo_availability" value="SLO Disponibilidad (%)" class="text-slate-600 text-[11px]" />
+                                <input id="edit_modal_slo_availability" name="slo_availability_target" type="number" step="0.01" min="50" max="100" x-model="editingService.slo_availability_target" class="mt-1 block w-full rounded-lg border-slate-300 text-xs focus:border-brand-primary focus:ring-brand-primary" required />
+                            </div>
+
+                            <div>
+                                <x-input-label for="edit_modal_slo_latency" value="SLO Latencia Máx (ms)" class="text-slate-600 text-[11px]" />
+                                <input id="edit_modal_slo_latency" name="slo_latency_target_ms" type="number" min="10" max="30000" x-model="editingService.slo_latency_target_ms" class="mt-1 block w-full rounded-lg border-slate-300 text-xs focus:border-brand-primary focus:ring-brand-primary" required />
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <x-input-label for="edit_modal_threshold" value="Umbral de Alerta de Latencia (ms)" class="font-semibold text-slate-700" />
                         <input id="edit_modal_threshold" name="latency_threshold_ms" type="number" min="50" max="60000" x-model="editingService.latency_threshold_ms" class="mt-1 block w-full rounded-lg border-slate-300 text-xs focus:border-brand-primary focus:ring-brand-primary" />
@@ -266,24 +294,24 @@
         </x-modal>
     </div>
 
-    <!-- 3. Modal de Registro de Servicio (RF-01) -->
+    <!-- 3. Modal de Registro de Servicio (RF-01 con SLOs) -->
     <x-modal name="new-service-modal" :show="$errors->isNotEmpty()" focusable>
         <form 
             method="POST" 
             action="{{ route('services.store') }}" 
-            class="p-6 text-xs"
+            class="p-6 text-xs space-y-4"
             x-data="{ saving: false }"
             @submit="saving = true"
         >
             @csrf
             <h2 class="text-lg font-bold text-brand-dark">
-                Registrar Nuevo Endpoint
+                Registrar Nuevo Endpoint & Objetivos SLA
             </h2>
             <p class="mt-1 text-xs text-brand-muted">
-                Ingresa los datos del microservicio o API que quieres supervisar en tiempo real.
+                Ingresa los datos del microservicio o API que quieres supervisar y sus acuerdos de nivel de servicio.
             </p>
 
-            <div class="mt-5 space-y-4">
+            <div class="space-y-4">
                 <div>
                     <x-input-label for="name" value="Nombre del Servicio" class="font-semibold text-slate-700" />
                     <x-text-input id="name" name="name" type="text" class="mt-1 block w-full text-xs" placeholder="Ej: API Backend Pagos" :value="old('name')" required />
@@ -318,6 +346,27 @@
                             <option value="3600" @selected(old('check_interval') == 3600)>Cada 1 hora</option>
                         </select>
                         <x-input-error :messages="$errors->get('check_interval')" class="mt-1.5" />
+                    </div>
+                </div>
+
+                <!-- Configuración SLA / SLO -->
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Objetivos de Nivel de Servicio (SLO)</h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <x-input-label for="slo_availability_target" value="SLO Disponibilidad (%)" class="text-slate-600 text-[11px]" />
+                            <x-text-input id="slo_availability_target" name="slo_availability_target" type="number" step="0.01" min="50" max="100" class="mt-1 block w-full text-xs" :value="old('slo_availability_target', '99.00')" required />
+                            <span class="text-[10px] text-slate-400">Meta deseada (ej: 99.0%)</span>
+                            <x-input-error :messages="$errors->get('slo_availability_target')" class="mt-1" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="slo_latency_target_ms" value="SLO Latencia Máx (ms)" class="text-slate-600 text-[11px]" />
+                            <x-text-input id="slo_latency_target_ms" name="slo_latency_target_ms" type="number" min="10" max="30000" class="mt-1 block w-full text-xs" :value="old('slo_latency_target_ms', '500')" required />
+                            <span class="text-[10px] text-slate-400">Rendimiento esperado (ej: 500 ms)</span>
+                            <x-input-error :messages="$errors->get('slo_latency_target_ms')" class="mt-1" />
+                        </div>
                     </div>
                 </div>
 
