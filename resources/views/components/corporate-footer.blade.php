@@ -4,9 +4,7 @@
             <!-- Columna 1: Marca & Misión -->
             <div class="space-y-3 md:col-span-1">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center text-brand-primary font-bold">
-                        <x-application-logo class="w-5 h-5" />
-                    </div>
+                    <x-application-logo class="w-6 h-6" />
                     <span class="font-extrabold text-base tracking-tight text-brand-dark">UpTracker</span>
                 </div>
                 <p class="text-xs text-brand-muted leading-relaxed">

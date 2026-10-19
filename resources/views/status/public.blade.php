@@ -7,6 +7,9 @@
     <meta name="description" content="Página de estado oficial y telemetría pública en tiempo real de la infraestructura y servicios de UpTracker.">
     <meta name="robots" content="index, follow">
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('logo.svg') }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
@@ -25,9 +28,7 @@
         <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <a href="/" class="flex items-center gap-2.5 group">
-                    <div class="w-9 h-9 rounded-xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center text-brand-primary transition group-hover:scale-105">
-                        <x-application-logo class="w-5 h-5" />
-                    </div>
+                    <x-application-logo class="w-8 h-8 transition-transform group-hover:scale-105" />
                     <div>
                         <span class="font-extrabold text-base tracking-tight text-brand-dark">UpTracker</span>
                         <span class="block text-[10px] uppercase font-semibold text-slate-400">Página de Estado Oficial</span>

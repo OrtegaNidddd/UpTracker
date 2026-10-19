@@ -5,8 +5,9 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto text-gray-800" />
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 group">
+                        <x-application-logo class="w-8 h-8 group-hover:scale-105 transition-transform" />
+                        <span class="font-bold text-lg tracking-tight text-brand-dark hidden sm:inline-block">UpTracker</span>
                     </a>
                 </div>
 

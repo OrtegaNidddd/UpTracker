@@ -5,6 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ config('app.name', 'UpTracker') }} - Monitoreo de Servicios</title>
 
+        <!-- Favicon -->
+        <link rel="icon" type="image/svg+xml" href="{{ asset('logo.svg') }}">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
@@ -50,13 +53,8 @@
 
         <!-- Header -->
         <header class="w-full max-w-7xl mx-auto px-6 py-8 flex items-center justify-between z-10">
-            <div class="flex items-center gap-3 group cursor-pointer" aria-label="UpTracker Logo">
-                <div class="w-10 h-10 rounded-xl bg-white border border-slate-200/80 flex items-center justify-center text-brand-primary shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:shadow-md">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 12v6m0-6l-2 2m2-2l2 2" />
-                    </svg>
-                </div>
+            <div class="flex items-center gap-2.5 group cursor-pointer" aria-label="UpTracker Logo">
+                <x-application-logo class="w-8 h-8 transition-transform duration-300 group-hover:scale-105" />
                 <span class="text-xl font-extrabold tracking-tight text-brand-dark">UpTracker</span>
             </div>
 
