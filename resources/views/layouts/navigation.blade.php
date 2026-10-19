@@ -5,8 +5,9 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto text-gray-800" />
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5 group">
+                        <x-application-logo class="w-8 h-8 group-hover:scale-105 transition-transform" />
+                        <span class="font-bold text-lg tracking-tight text-brand-dark hidden sm:inline-block">UpTracker</span>
                     </a>
                 </div>
 
@@ -23,6 +24,16 @@
                     </x-nav-link>
                     <x-nav-link :href="route('status.page')" target="_blank">
                         {{ __('Página de Estado ↗') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('services.index')" :active="request()->routeIs('services.*')">
+                        {{ __('Servicios') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('notification-channels.index')" :active="request()->routeIs('notification-channels.*')">
+                        {{ __('Canales de Alerta') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('status.public')" target="_blank">
+                        {{ __('Página de Estado') }}
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5 inline-block"></span>
                     </x-nav-link>
                 </div>
             </div>
@@ -87,6 +98,15 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('status.page')" target="_blank">
                 {{ __('Página de Estado ↗') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('services.index')" :active="request()->routeIs('services.*')">
+                {{ __('Servicios') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('notification-channels.index')" :active="request()->routeIs('notification-channels.*')">
+                {{ __('Canales de Alerta') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('status.public')" target="_blank">
+                {{ __('Página de Estado Pública') }} ↗
             </x-responsive-nav-link>
         </div>
 

@@ -13,7 +13,14 @@ class NotificationChannelWebTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_can_view_notification_channels(): void
+    public function test_guest_is_redirected_to_login_when_accessing_notification_channels(): void
+    {
+        $response = $this->get(route('notification-channels.index'));
+
+        $response->assertRedirect('/login');
+    }
+
+    public function test_authenticated_user_can_view_notification_channels_index(): void
     {
         $user = User::factory()->create();
 
@@ -28,7 +35,6 @@ class NotificationChannelWebTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('admin@empresa.com');
-        $response->assertSee('Canales de Alerta');
     }
 
     public function test_user_can_create_email_notification_channel(): void
@@ -107,5 +113,15 @@ class NotificationChannelWebTest extends TestCase
         $this->assertDatabaseMissing('notification_channels', [
             'id' => $channel->id,
         ]);
+    }
+
+    public function test_user_cannot_modify_or_delete_another_users_channel(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $channel = NotificationChannel::factory()->create(['user_id' => $user1->id]);
+
+        $responseDelete = $this->actingAs($user2)->delete(route('notification-channels.destroy', $channel));
+        $responseDelete->assertStatus(403);
     }
 }

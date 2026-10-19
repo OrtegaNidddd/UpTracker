@@ -51,9 +51,10 @@ class ServiceController extends Controller
     {
         abort_if((int) $service->user_id !== (int) auth()->id(), 403);
 
+        // Combinamos la carga de relaciones de ambas ramas (logs, incidentes, historial de SLA)
         $service->load([
-            'latencyLogs' => fn ($q) => $q->latest('checked_at')->limit(30),
-            'incidents' => fn ($q) => $q->latest('started_at')->limit(10),
+            'latencyLogs' => fn ($q) => $q->latest('checked_at')->limit(50),
+            'incidents' => fn ($q) => $q->latest('started_at')->limit(15),
             'slaHistories' => fn ($q) => $q->latest('snapshot_date')->limit(30),
         ]);
 
@@ -61,15 +62,27 @@ class ServiceController extends Controller
         $sla = $slaService->calculateSla($service, 30);
         $slaTrend = $slaService->getHistoricalTrend($service, 7);
 
+        // Métricas de uptime de 24 horas y datos para gráficos de la vista
+        $twentyFourHoursAgo = now()->subHours(24);
+        $totalChecks = $service->latencyLogs()->where('checked_at', '>=', $twentyFourHoursAgo)->count();
+        $upChecks = $service->latencyLogs()->where('checked_at', '>=', $twentyFourHoursAgo)->where('status', 'Up')->count();
+        $service->uptime_24h = $totalChecks > 0 ? round(($upChecks / $totalChecks) * 100, 2) : 100.0;
+
+        $chronologicalLogs = $service->latencyLogs->reverse()->values();
+        $chartLabels = $chronologicalLogs->map(fn ($log) => $log->checked_at?->format('H:i:s') ?? '')->all();
+        $chartData = $chronologicalLogs->map(fn ($log) => $log->latency_ms ?? 0)->all();
+
         if (request()->wantsJson()) {
             return response()->json([
                 'service' => $service,
                 'sla' => $sla,
                 'sla_trend' => $slaTrend,
+                'chart_labels' => $chartLabels,
+                'chart_data' => $chartData,
             ]);
         }
 
-        return view('services.show', compact('service', 'sla', 'slaTrend'));
+        return view('services.show', compact('service', 'sla', 'slaTrend', 'chartLabels', 'chartData'));
     }
 
     public function update(Request $request, Service $service)

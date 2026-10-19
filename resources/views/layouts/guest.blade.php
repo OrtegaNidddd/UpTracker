@@ -7,6 +7,9 @@
 
         <title>{{ config('app.name', 'UpTracker') }}</title>
 
+        <!-- Favicon -->
+        <link rel="icon" type="image/svg+xml" href="{{ asset('logo.svg') }}">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
@@ -43,10 +46,8 @@
 
         <!-- Header -->
         <header class="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-            <a href="/" class="group flex items-center gap-3 transition-transform duration-200 hover:scale-[1.02]">
-                <div class="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center text-brand-primary shadow-sm shadow-brand-primary/10 group-hover:bg-brand-primary/15 transition-all">
-                    <x-application-logo class="w-6 h-6" />
-                </div>
+            <a href="/" class="group flex items-center gap-2.5 transition-transform duration-200 hover:scale-[1.02]">
+                <x-application-logo class="w-8 h-8" />
                 <span class="text-xl font-bold tracking-tight text-brand-dark">UpTracker</span>
             </a>
 
@@ -72,8 +73,12 @@
 
         <!-- Footer -->
         <footer class="w-full max-w-7xl mx-auto px-6 py-5 text-center text-xs text-brand-muted">
-            &copy; {{ date('Y') }} UpTracker &bull; Monitoreo de Disponibilidad y Servicios
+            &copy; {{ date('Y') }} UpTracker &bull; Monitoreo de Disponibilidad y Servicios &bull; Cumplimiento Ley 1581 de 2012
         </footer>
+
+        <!-- Notificaciones y Cookies -->
+        <x-toast-notification />
+        <x-cookie-banner />
     </body>
 
         <!-- Script de red de partículas interactivas -->
