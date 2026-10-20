@@ -50,7 +50,7 @@ class PublicStatusController extends Controller
         $uptimeStats = LatencyLog::query()
             ->whereIn('service_id', $serviceIds)
             ->where('checked_at', '>=', $twentyFourHoursAgo)
-            ->selectRaw('service_id, COUNT(*) as total_checks, SUM(CASE WHEN status = "Up" THEN 1 ELSE 0 END) as up_checks')
+            ->selectRaw("service_id, COUNT(*) as total_checks, SUM(CASE WHEN status = 'Up' THEN 1 ELSE 0 END) as up_checks")
             ->groupBy('service_id')
             ->get()
             ->keyBy('service_id');

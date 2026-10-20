@@ -45,8 +45,9 @@
 
             <!-- 1. Tarjetas de Resumen General -->
             @php
-                $totalServices = $services->count();$avgUptime = $totalServices > 0 ? round($services->avg('uptime_24h'), 2) : 100.0;
-                $activeIncidentsCount =$services->filter(fn ($s) =>$s->openIncident !== null)->count();
+                $totalServices = $services->count();
+                $avgUptime = $totalServices > 0 ? round($services->avg('uptime_24h') ?? 100.0, 2) : 100.0;
+                $activeIncidentsCount = $services->filter(fn ($s) => $s->openIncident !== null)->count();
             @endphp
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -117,11 +118,11 @@
                         class="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 space-y-5 transition hover:shadow-md"
                         x-data="{
                             serviceId: {{ $service->id }},
-                            uptime: {{ $service->uptime_24h }},
+                            uptime: {{ $service->uptime_24h ?? 100.0 }},
                             status: '{{ $service->status }}',
                             currentLatency: {{ $currentLatency !== null ? $currentLatency : 'null' }},
-                            labels: {{ json_encode($service->chart_labels) }},
-                            data: {{ json_encode($service->chart_data) }},
+                            labels: {{ json_encode($service->chart_labels ?? []) }},
+                            data: {{ json_encode($service->chart_data ?? []) }},
                             lastLogId: {{ $latestLogId }},
                             chart: null,
                             init() {
@@ -254,7 +255,7 @@
                                     </template>
 
                                     <!-- Badge SLA integrado -->
-                                    @if(isset($service->sla))
+                                    @if(isset($service->sla) && is_array($service->sla))
                                         @if($service->sla['status'] === 'Cumple')
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                                                 ✓ SLA: Cumple
@@ -294,7 +295,7 @@
                         </div>
 
                         <!-- Panel de Análisis SLA y Presupuesto de Error del Servicio -->
-                        @if(isset($service->sla))
+                        @if(isset($service->sla) && is_array($service->sla))
                         <div class="bg-slate-50/75 rounded-xl p-4 border border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
                             <div>
                                 <span class="text-brand-muted font-semibold uppercase tracking-wider block text-[10px]">SLI Disponibilidad (30d)</span>
@@ -330,7 +331,7 @@
                             <div>
                                 <span class="text-brand-muted font-semibold uppercase tracking-wider block text-[10px]">Histórico SLA (Últimos 7 días)</span>
                                 <div class="flex items-center gap-1.5 mt-1.5">
-                                    @foreach ($service->sla_trend as $snapshot)
+                                    @foreach (($service->sla_trend ?? []) as $snapshot)
                                         <div 
                                             class="w-4 h-4 rounded-md flex items-center justify-center text-[9px] font-bold text-white {{ $snapshot['status'] === 'Cumple' ? 'bg-emerald-500' : ($snapshot['status'] === 'En riesgo' ? 'bg-amber-500' : 'bg-rose-500') }}"
                                             title="{{ $snapshot['date'] }}: {{ $snapshot['status'] }} (SLI: {{$snapshot['uptime_sli'] }}%)">
