@@ -31,6 +31,7 @@ if [ "$DB_CONNECTION" = "sqlite" ] || [ -z "$DB_CONNECTION" ]; then
     fi
     chown -R www-data:www-data /var/www/html/database 2>/dev/null || true
     chmod -R 775 /var/www/html/database 2>/dev/null || true
+    sqlite3 /var/www/html/database/database.sqlite "PRAGMA journal_mode=WAL;" 2>/dev/null || true
 fi
 
 # Ajustar permisos para el servidor web y limpiar caché heredada
