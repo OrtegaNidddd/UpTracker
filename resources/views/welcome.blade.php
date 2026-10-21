@@ -135,8 +135,10 @@
                 &copy; {{ date('Y') }} UpTracker. Todos los derechos reservados.
             </div>
             <div class="flex items-center gap-6 text-xs font-medium text-brand-muted">
-                <a href="#" class="hover:text-brand-dark transition-colors">Privacidad</a>
-                <a href="#" class="hover:text-brand-dark transition-colors">Términos</a>
+                <a href="{{ route('status.page') }}" class="hover:text-brand-dark transition-colors">Estado del Sistema</a>
+                <button type="button" @click="$dispatch('open-policy-modal', { tab: 'privacy' })" class="hover:text-brand-dark transition-colors cursor-pointer">Privacidad & Ley 1581</button>
+                <button type="button" @click="$dispatch('open-policy-modal', { tab: 'cookies' })" class="hover:text-brand-dark transition-colors cursor-pointer">Políticas de Cookies</button>
+                <button type="button" @click="$dispatch('open-policy-modal', { tab: 'terms' })" class="hover:text-brand-dark transition-colors cursor-pointer">Términos & SLA</button>
             </div>
         </footer>
 
@@ -264,5 +266,7 @@
                 animate();
             });
         </script>
+        <!-- Banner de Consentimiento de Cookies y Centro de Políticas -->
+        <x-cookie-banner />
     </body>
 </html>

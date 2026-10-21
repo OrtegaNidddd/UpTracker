@@ -81,6 +81,37 @@ class PublicStatusApiTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('status', 'No_Services')
-            ->assertJsonCount(0, 'services');
+            ->assertJsonCount(0, 'services')
+            ->assertJsonPath('sla_summary.compliant_count', 0);
+    }
+
+    public function test_public_status_page_loads_with_cookie_banner_and_header(): void
+    {
+        $response = $this->get('/status');
+
+        $response->assertStatus(200)
+            ->assertSee('UpTracker')
+            ->assertSee('Página de Estado Pública &amp; SLA', false)
+            ->assertSee('Estado de Servicios y Cumplimiento SLA')
+            ->assertSee('Centro de Políticas, Cookies y Tratamiento de Datos')
+            ->assertSee('Ley 1581 / 2012');
+    }
+
+    public function test_public_status_endpoint_returns_json_for_ajax_request(): void
+    {
+        $response = $this->get('/status/public', [
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertHeader('Content-Type', 'application/json')
+            ->assertJsonStructure([
+                'status',
+                'summary',
+                'total_monitored',
+                'online_count',
+                'sla_summary',
+                'services',
+            ]);
     }
 }

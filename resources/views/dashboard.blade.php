@@ -107,7 +107,7 @@
 
             <!-- 2. Tarjetas de Servicios con Histórico y Chart.js en Tiempo Real -->
             <div class="space-y-6">
-                @forelse ($services as$service)
+                @forelse ($services as $service)
                     @php
                         $latestLog = $service->latency_history?->last() ?? $service->latencyLogs->first();
                         $currentLatency =$latestLog?->latency_ms;
@@ -330,7 +330,7 @@
                             <div>
                                 <span class="text-brand-muted font-semibold uppercase tracking-wider block text-[10px]">Histórico SLA (Últimos 7 días)</span>
                                 <div class="flex items-center gap-1.5 mt-1.5">
-                                    @foreach($service->sla_trend as$snapshot)
+                                    @foreach($service->sla_trend as $snapshot)
                                         <div 
                                             class="w-4 h-4 rounded-md flex items-center justify-center text-[9px] font-bold text-white {{ $snapshot['status'] === 'Cumple' ? 'bg-emerald-500' : ($snapshot['status'] === 'En riesgo' ? 'bg-amber-500' : 'bg-rose-500') }}"
                                             title="{{ $snapshot['date'] }}: {{ $snapshot['status'] }} (SLI: {{$snapshot['uptime_sli'] }}%)">

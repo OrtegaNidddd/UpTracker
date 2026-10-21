@@ -30,6 +30,12 @@ class PublicStatusController extends Controller
                 'services' => [],
                 'active_incidents' => [],
                 'resolved_incidents' => [],
+                'sla_summary' => [
+                    'compliant_count' => 0,
+                    'at_risk_count' => 0,
+                    'breached_count' => 0,
+                    'overall_compliance_rate' => 100.0,
+                ],
                 'generated_at' => now()->toISOString(),
                 'total_monitored' => 0,
                 'online_count' => 0,
@@ -37,7 +43,7 @@ class PublicStatusController extends Controller
                 'degraded_count' => 0,
             ];
 
-            if ($request->wantsJson() || $request->is('api/*')) {
+            if ($request->wantsJson() || $request->is('api/*') || $request->ajax() || $request->has('json')) {
                 return response()->json($emptyData);
             }
 
@@ -168,7 +174,7 @@ class PublicStatusController extends Controller
             'generated_at' => now()->toISOString(),
         ];
 
-        if ($request->wantsJson() || $request->is('api/*')) {
+        if ($request->wantsJson() || $request->is('api/*') || $request->ajax() || $request->has('json')) {
             return response()->json($data);
         }
 

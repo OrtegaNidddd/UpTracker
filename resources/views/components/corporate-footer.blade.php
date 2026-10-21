@@ -12,7 +12,7 @@
                 </p>
                 <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-700">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <a href="{{ route('status.public') }}" class="hover:underline">Estado Público Global</a>
+                    <a href="{{ route('status.page') }}" class="hover:underline">Estado Público Global</a>
                 </div>
             </div>
 
@@ -23,7 +23,7 @@
                     <li><a href="{{ route('dashboard') }}" class="hover:text-brand-primary transition">Dashboard Telemetría</a></li>
                     <li><a href="{{ route('services.index') }}" class="hover:text-brand-primary transition">Gestión de Endpoints</a></li>
                     <li><a href="{{ route('notification-channels.index') }}" class="hover:text-brand-primary transition">Canales de Alerta (Discord / Telegram)</a></li>
-                    <li><a href="{{ route('status.public') }}" class="hover:text-brand-primary transition">Página de Estado Pública</a></li>
+                    <li><a href="{{ route('status.page') }}" class="hover:text-brand-primary transition">Página de Estado Pública</a></li>
                 </ul>
             </div>
 
@@ -51,9 +51,10 @@
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Legal y Conformidad</h4>
                 <ul class="space-y-2 text-xs text-brand-muted">
                     <li><span class="font-medium text-slate-700">Ley 1581 de 2012</span> (Habeas Data)</li>
-                    <li><a href="#terminos" class="hover:text-brand-primary transition">Términos del Servicio</a></li>
-                    <li><a href="#privacidad" class="hover:text-brand-primary transition">Política de Tratamiento de Datos</a></li>
-                    <li><a href="#seguridad" class="hover:text-brand-primary transition">Compromiso de Seguridad & SLA</a></li>
+                    <li><button type="button" @click="$dispatch('open-policy-modal', { tab: 'terms' })" class="hover:text-brand-primary transition text-left cursor-pointer">Términos del Servicio</button></li>
+                    <li><button type="button" @click="$dispatch('open-policy-modal', { tab: 'privacy' })" class="hover:text-brand-primary transition text-left cursor-pointer">Política de Tratamiento de Datos</button></li>
+                    <li><button type="button" @click="$dispatch('open-policy-modal', { tab: 'cookies' })" class="hover:text-brand-primary transition text-left cursor-pointer">Políticas y Consentimiento de Cookies</button></li>
+                    <li><button type="button" @click="$dispatch('open-policy-modal', { tab: 'security' })" class="hover:text-brand-primary transition text-left cursor-pointer">Compromiso de Seguridad & SLA</button></li>
                 </ul>
             </div>
         </div>
