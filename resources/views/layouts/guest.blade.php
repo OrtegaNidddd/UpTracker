@@ -18,6 +18,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         <style>
+            [x-cloak] { display: none !important; }
             .bg-grid-pattern {
                 background-size: 40px 40px;
                 background-image: linear-gradient(to right, rgba(13, 25, 43, 0.02) 1px, transparent 1px),

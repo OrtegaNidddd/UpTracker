@@ -15,6 +15,9 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
+        <style>
+            [x-cloak] { display: none !important; }
+        </style>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased min-h-full flex flex-col justify-between bg-slate-50 text-brand-dark selection:bg-brand-primary selection:text-white">

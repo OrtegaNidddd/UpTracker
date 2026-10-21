@@ -92,6 +92,7 @@
     <div 
         x-show="bannerVisible"
         x-cloak
+        style="display: none;"
         x-transition:enter="transition ease-out duration-500"
         x-transition:enter-start="opacity-0 translate-y-8"
         x-transition:enter-end="opacity-100 translate-y-0"
@@ -165,6 +166,7 @@
     <div 
         x-show="modalOpen" 
         x-cloak 
+        style="display: none;"
         class="fixed inset-0 z-50 overflow-y-auto"
         aria-labelledby="policy-modal-title" 
         role="dialog" 
