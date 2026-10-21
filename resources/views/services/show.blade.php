@@ -322,9 +322,9 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-slate-700">
-                                @forelse($service->slaHistories as $history)
+                                @forelse ($service->slaHistories as $history)
                                     <tr class="hover:bg-slate-50/50">
-                                        <td class="p-3.5 font-bold text-slate-800">{{ $history->snapshot_date->format('Y-m-d') }}</td>
+                                        <td class="p-3.5 font-bold text-slate-800">{{ \Illuminate\Support\Carbon::parse($history->snapshot_date)->format('Y-m-d') }}</td>
                                         <td class="p-3.5 font-bold">{{ $history->uptime_sli }}%</td>
                                         <td class="p-3.5">{{ $history->avg_latency_ms }} ms</td>
                                         <td class="p-3.5 font-bold {{ $history->error_budget_percentage <= 25 ? 'text-rose-600' : 'text-emerald-600' }}">
@@ -384,7 +384,7 @@
                                             </span>
                                         @endif
                                     </div>
-                                    <span class="text-[11px] text-slate-500">{{ $incident->started_at ? $incident->started_at->format('d/m/Y H:i') : '' }}</span>
+                                    <span class="text-[11px] text-slate-500">{{ $incident->started_at ? \Illuminate\Support\Carbon::parse($incident->started_at)->format('d/m/Y H:i') : '' }}</span>
                                 </div>
                                 <p class="mt-2 text-xs text-slate-700 leading-relaxed font-medium">
                                     {{ $incident->details ?? 'Se detectó fallo en la respuesta HTTP o tiempo de espera excedido.' }}

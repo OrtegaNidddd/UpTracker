@@ -6,6 +6,7 @@ use App\Models\LatencyLog;
 use App\Services\SlaService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -32,13 +33,18 @@ class DashboardController extends Controller
         $twentyFourHoursAgo = now()->subHours(24);
 
         // 2. Consulta agregada por lotes para calcular el uptime de 24h sin problema N+1
-        $uptimeStats = LatencyLog::query()
-            ->whereIn('service_id', $serviceIds)
-            ->where('checked_at', '>=', $twentyFourHoursAgo)
-            ->selectRaw('service_id, COUNT(*) as total_checks, SUM(CASE WHEN status = "Up" THEN 1 ELSE 0 END) as up_checks')
-            ->groupBy('service_id')
-            ->get()
-            ->keyBy('service_id');
+        try {
+            $uptimeStats = LatencyLog::query()
+                ->whereIn('service_id', $serviceIds)
+                ->where('checked_at', '>=', $twentyFourHoursAgo)
+                ->selectRaw("service_id, COUNT(*) as total_checks, SUM(CASE WHEN status = 'Up' THEN 1 ELSE 0 END) as up_checks")
+                ->groupBy('service_id')
+                ->get()
+                ->keyBy('service_id');
+        } catch (\Throwable $e) {
+            Log::error("Error consultando uptime 24h: {$e->getMessage()}");
+            $uptimeStats = collect();
+        }
 
         $slaService = app(SlaService::class);
         $slaCompliantCount = 0;
@@ -55,16 +61,22 @@ class DashboardController extends Controller
                 ? round(($upChecks / $totalChecks) * 100, 2)
                 : 100.0;
 
-            // Análisis y cálculo SLA/SLO (30 días)
-            $sla = $slaService->calculateSla($service, 30);
-            $service->sla = $sla;
-            $service->sla_trend = $slaService->getHistoricalTrend($service, 7);
+            // Análisis y cálculo SLA/SLO (30 días) con manejo seguro ante fallos
+            try {
+                $sla = $slaService->calculateSla($service, 30);
+                $service->sla = $sla;
+                $service->sla_trend = $slaService->getHistoricalTrend($service, 7);
 
-            match ($sla['status']) {
-                'Cumple' => $slaCompliantCount++,
-                'En riesgo' => $slaAtRiskCount++,
-                default => $slaBreachedCount++,
-            };
+                match ($sla['status']) {
+                    'Cumple' => $slaCompliantCount++,
+                    'En riesgo' => $slaAtRiskCount++,
+                    default => $slaBreachedCount++,
+                };
+            } catch (\Throwable $e) {
+                Log::error("Error calculando SLA para servicio [{$service->id}]: {$e->getMessage()}");
+                $service->sla = null;
+                $service->sla_trend = collect();
+            }
 
             // Obtener los 50 logs más recientes ordenados cronológicamente (antiguo -> reciente)
             $recentLogs = $service->latencyLogs()

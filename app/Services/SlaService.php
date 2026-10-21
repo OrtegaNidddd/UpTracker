@@ -39,15 +39,22 @@ class SlaService
     public function calculateSla(Service $service, int $periodDays = 30): array
     {
         $since = now()->subDays($periodDays);
-
-        $logs = LatencyLog::query()
-            ->where('service_id', $service->id)
-            ->where('checked_at', '>=', $since)
-            ->get(['status', 'latency_ms', 'checked_at']);
-
-        $totalChecks = $logs->count();
         $targetAvailability = (float) ($service->slo_availability_target ?? 99.00);
         $targetLatencyMs = (int) ($service->slo_latency_target_ms ?? 500);
+
+        // Agregación directa en SQL para máxima velocidad y evitar desbordamiento de memoria
+        $stats = LatencyLog::query()
+            ->where('service_id', $service->id)
+            ->where('checked_at', '>=', $since)
+            ->selectRaw("
+                COUNT(*) as total_checks,
+                SUM(CASE WHEN status = 'Up' THEN 1 ELSE 0 END) as up_checks,
+                SUM(CASE WHEN latency_ms IS NOT NULL AND latency_ms <= {$targetLatencyMs} THEN 1 ELSE 0 END) as fast_checks,
+                AVG(CASE WHEN latency_ms IS NOT NULL THEN latency_ms END) as avg_latency
+            ")
+            ->first();
+
+        $totalChecks = $stats ? (int) $stats->total_checks : 0;
 
         if ($totalChecks === 0) {
             return [
@@ -68,25 +75,28 @@ class SlaService
             ];
         }
 
-        $upChecks = $logs->where('status', 'Up')->count();
+        $upChecks = (int) ($stats->up_checks ?? 0);
+        $fastChecks = (int) ($stats->fast_checks ?? 0);
+        $avgLatencyMs = $stats->avg_latency !== null ? (int) round((float) $stats->avg_latency) : 0;
         $uptimeSli = round(($upChecks / $totalChecks) * 100, 2);
+        $latencyComplianceRate = round(($fastChecks / $totalChecks) * 100, 2);
 
-        $validLatencies = $logs->whereNotNull('latency_ms')->pluck('latency_ms')->sort()->values();
-        $avgLatencyMs = $validLatencies->isNotEmpty() ? (int) round($validLatencies->average()) : 0;
-
-        // Cálculo de percentil 95 (P95)
+        // Cálculo de percentil 95 (P95) acotado a muestra reciente de hasta 1000 registros
         $p95LatencyMs = 0;
+        $validLatencies = LatencyLog::query()
+            ->where('service_id', $service->id)
+            ->where('checked_at', '>=', $since)
+            ->whereNotNull('latency_ms')
+            ->latest('checked_at')
+            ->limit(1000)
+            ->pluck('latency_ms')
+            ->sort()
+            ->values();
+
         if ($validLatencies->isNotEmpty()) {
             $p95Index = (int) ceil(0.95 * $validLatencies->count()) - 1;
             $p95LatencyMs = (int) $validLatencies->get(max(0, $p95Index));
         }
-
-        // Chequeos que cumplen con el objetivo de latencia
-        $fastChecks = $logs->filter(
-            fn (LatencyLog $log) => $log->latency_ms !== null && $log->latency_ms <= $targetLatencyMs
-        )->count();
-
-        $latencyComplianceRate = $totalChecks > 0 ? round(($fastChecks / $totalChecks) * 100, 2) : 100.0;
 
         // Presupuesto de Error (Error Budget)
         // Ejemplo: SLO = 99.00% -> Margen permitido de fallo = 1.00%
@@ -211,55 +221,56 @@ class SlaService
     }
 
     /**
-     * Almacena o actualiza la fotografía diaria de cumplimiento SLA del servicio.
+     * Construye las métricas de snapshot diario de un servicio en memoria sin bloquear la BD con escrituras innecesarias.
+     *
+     * @return array{
+     *     total_checks: int,
+     *     up_checks: int,
+     *     uptime_sli: float,
+     *     avg_latency_ms: int,
+     *     p95_latency_ms: int,
+     *     latency_compliance_rate: float,
+     *     error_budget_percentage: float,
+     *     status: string
+     * }
      */
-    public function recordDailySnapshot(Service $service, ?Carbon $date = null): SlaHistory
+    public function buildDailySnapshotData(Service $service, Carbon $date): array
     {
-        $targetDate = $date ? $date->copy()->startOfDay() : now()->startOfDay();
-        $startOfDay = $targetDate->copy()->startOfDay();
-        $endOfDay = $targetDate->copy()->endOfDay();
-
-        $logs = LatencyLog::query()
-            ->where('service_id', $service->id)
-            ->whereBetween('checked_at', [$startOfDay, $endOfDay])
-            ->get();
-
-        $totalChecks = $logs->count();
+        $startOfDay = $date->copy()->startOfDay();
+        $endOfDay = $date->copy()->endOfDay();
         $targetAvailability = (float) ($service->slo_availability_target ?? 99.00);
         $targetLatencyMs = (int) ($service->slo_latency_target_ms ?? 500);
 
+        $stats = LatencyLog::query()
+            ->where('service_id', $service->id)
+            ->whereBetween('checked_at', [$startOfDay, $endOfDay])
+            ->selectRaw("
+                COUNT(*) as total_checks,
+                SUM(CASE WHEN status = 'Up' THEN 1 ELSE 0 END) as up_checks,
+                SUM(CASE WHEN latency_ms IS NOT NULL AND latency_ms <= {$targetLatencyMs} THEN 1 ELSE 0 END) as fast_checks,
+                AVG(CASE WHEN latency_ms IS NOT NULL THEN latency_ms END) as avg_latency
+            ")
+            ->first();
+
+        $totalChecks = $stats ? (int) $stats->total_checks : 0;
+
         if ($totalChecks === 0) {
-            return SlaHistory::updateOrCreate(
-                ['service_id' => $service->id, 'snapshot_date' => $targetDate->toDateString()],
-                [
-                    'total_checks' => 0,
-                    'up_checks' => 0,
-                    'uptime_sli' => 100.0,
-                    'avg_latency_ms' => 0,
-                    'p95_latency_ms' => 0,
-                    'latency_compliance_rate' => 100.0,
-                    'error_budget_percentage' => 100.0,
-                    'status' => 'Cumple',
-                ]
-            );
+            return [
+                'total_checks' => 0,
+                'up_checks' => 0,
+                'uptime_sli' => 100.0,
+                'avg_latency_ms' => 0,
+                'p95_latency_ms' => 0,
+                'latency_compliance_rate' => 100.0,
+                'error_budget_percentage' => 100.0,
+                'status' => 'Cumple',
+            ];
         }
 
-        $upChecks = $logs->where('status', 'Up')->count();
+        $upChecks = (int) ($stats->up_checks ?? 0);
+        $fastChecks = (int) ($stats->fast_checks ?? 0);
+        $avgLatency = $stats->avg_latency !== null ? (int) round((float) $stats->avg_latency) : 0;
         $uptimeSli = round(($upChecks / $totalChecks) * 100, 2);
-
-        $latencies = $logs->whereNotNull('latency_ms')->pluck('latency_ms')->sort()->values();
-        $avgLatency = $latencies->isNotEmpty() ? (int) round($latencies->average()) : 0;
-
-        $p95Latency = 0;
-        if ($latencies->isNotEmpty()) {
-            $idx = (int) ceil(0.95 * $latencies->count()) - 1;
-            $p95Latency = (int) $latencies->get(max(0, $idx));
-        }
-
-        $fastChecks = $logs->filter(
-            fn (LatencyLog $l) => $l->latency_ms !== null && $l->latency_ms <= $targetLatencyMs
-        )->count();
-
         $latencyCompliance = round(($fastChecks / $totalChecks) * 100, 2);
 
         $allowedDowntime = 100.0 - $targetAvailability;
@@ -274,18 +285,29 @@ class SlaService
             default => 'Cumple',
         };
 
+        return [
+            'total_checks' => $totalChecks,
+            'up_checks' => $upChecks,
+            'uptime_sli' => $uptimeSli,
+            'avg_latency_ms' => $avgLatency,
+            'p95_latency_ms' => 0,
+            'latency_compliance_rate' => $latencyCompliance,
+            'error_budget_percentage' => $errorBudget,
+            'status' => $status,
+        ];
+    }
+
+    /**
+     * Almacena o actualiza la fotografía diaria de cumplimiento SLA del servicio.
+     */
+    public function recordDailySnapshot(Service $service, ?Carbon $date = null): SlaHistory
+    {
+        $targetDate = $date ? $date->copy()->startOfDay() : now()->startOfDay();
+        $data = $this->buildDailySnapshotData($service, $targetDate);
+
         return SlaHistory::updateOrCreate(
             ['service_id' => $service->id, 'snapshot_date' => $targetDate->toDateString()],
-            [
-                'total_checks' => $totalChecks,
-                'up_checks' => $upChecks,
-                'uptime_sli' => $uptimeSli,
-                'avg_latency_ms' => $avgLatency,
-                'p95_latency_ms' => $p95Latency,
-                'latency_compliance_rate' => $latencyCompliance,
-                'error_budget_percentage' => $errorBudget,
-                'status' => $status,
-            ]
+            $data
         );
     }
 
@@ -297,28 +319,42 @@ class SlaService
     public function getHistoricalTrend(Service $service, int $days = 7): Collection
     {
         $result = collect();
+        $startDate = now()->subDays($days - 1)->startOfDay();
+
+        // Carga en lote de snapshots existentes para evitar bloqueos y el problema N+1
+        $existingHistories = SlaHistory::query()
+            ->where('service_id', $service->id)
+            ->where('snapshot_date', '>=', $startDate->toDateString())
+            ->get()
+            ->keyBy(fn (SlaHistory $h) => Carbon::parse($h->snapshot_date)->toDateString());
 
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = now()->subDays($i)->startOfDay();
             $dateStr = $date->toDateString();
 
-            $history = SlaHistory::query()
-                ->where('service_id', $service->id)
-                ->where('snapshot_date', $dateStr)
-                ->first();
+            $history = $existingHistories->get($dateStr);
 
             if (! $history) {
-                // Generar snapshot dinámicamente si no existía
-                $history = $this->recordDailySnapshot($service, $date);
+                // Durante consultas web GET, calculamos en memoria para no saturar SQLite con escrituras concurrentes
+                $data = $this->buildDailySnapshotData($service, $date);
+                $uptimeSli = $data['uptime_sli'];
+                $errorBudget = $data['error_budget_percentage'];
+                $avgLatency = $data['avg_latency_ms'];
+                $status = $data['status'];
+            } else {
+                $uptimeSli = (float) $history->uptime_sli;
+                $errorBudget = (float) $history->error_budget_percentage;
+                $avgLatency = (int) $history->avg_latency_ms;
+                $status = $history->status;
             }
 
             $result->push([
                 'date' => $date->format('d/m'),
                 'full_date' => $dateStr,
-                'uptime_sli' => (float) $history->uptime_sli,
-                'error_budget' => (float) $history->error_budget_percentage,
-                'avg_latency' => (int) $history->avg_latency_ms,
-                'status' => $history->status,
+                'uptime_sli' => $uptimeSli,
+                'error_budget' => $errorBudget,
+                'avg_latency' => $avgLatency,
+                'status' => $status,
             ]);
         }
 

@@ -88,7 +88,7 @@ class ServiceWebTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Microservicio Detalle');
         $response->assertSee('Curva de Latencia de Red');
-        $response->assertSee('Registro de Sondeos de Red');
+        $response->assertSee('Bitácora Histórica de SLA');
         $response->assertSee('Bitácora de Incidentes');
     }
 
