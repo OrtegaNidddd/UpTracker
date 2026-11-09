@@ -3,9 +3,7 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex items-center gap-3">
                 <a href="{{ route('services.index') }}" class="p-2 text-slate-400 hover:text-brand-dark hover:bg-slate-100 rounded-xl transition" title="Volver al listado">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                    </svg>
+                    <x-reicon name="arrow-left" class="w-5 h-5" />
                 </a>
                 <div>
                     <div class="flex items-center gap-3">
@@ -37,7 +35,7 @@
                         <span class="font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-semibold">{{ $service->http_method ?? 'GET' }}</span>
                         <a href="{{ $service->url }}" target="_blank" rel="noopener noreferrer" class="hover:text-brand-primary underline truncate max-w-md inline-flex items-center gap-1 font-mono">
                             {{ $service->url }}
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                            <x-reicon name="link" class="w-3 h-3" />
                         </a>
                         <span>&bull;</span>
                         <span>Chequeo: <strong>{{ $service->formatted_interval }}</strong></span>
@@ -54,7 +52,7 @@
                 </script>
 
                 <a href="{{ route('dashboard') }}#service-card-{{ $service->id }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-lg shadow-xs transition">
-                    <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10"/></svg>
+                    <x-reicon name="chart-square" class="w-4 h-4 text-brand-primary" />
                     Ver en Dashboard
                 </a>
 
@@ -62,7 +60,7 @@
                     x-data=""
                     x-on:click.prevent="$dispatch('open-modal', 'edit-service-modal')"
                     class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg shadow-xs transition">
-                    <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <x-reicon name="pen-square" class="w-4 h-4 text-slate-300" />
                     Editar Configuración
                 </button>
 
@@ -70,7 +68,7 @@
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-lg transition" title="Eliminar servicio">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        <x-reicon name="trash" class="w-4 h-4" />
                     </button>
                 </form>
             </div>
@@ -393,7 +391,7 @@
                         @empty
                             <div class="text-center py-12 px-4 space-y-2">
                                 <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <x-reicon name="check-circle" class="w-6 h-6" />
                                 </div>
                                 <h4 class="font-bold text-sm text-brand-dark">¡Sin incidentes reportados!</h4>
                                 <p class="text-xs text-brand-muted max-w-xs mx-auto">

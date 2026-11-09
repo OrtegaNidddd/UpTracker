@@ -39,7 +39,7 @@
             <div class="flex items-center gap-3">
                 <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-primary hover:bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-sm transition">
                     <span>Acceder</span>
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    <x-reicon name="arrow-right" class="w-3.5 h-3.5" />
                 </a>
             </div>
         </div>
@@ -198,7 +198,7 @@
                     @empty
                         <div class="py-10 text-center space-y-2">
                             <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <x-reicon name="check-circle" class="w-5 h-5" />
                             </div>
                             <h4 class="font-bold text-xs text-slate-700">Sin incidentes abiertos</h4>
                             <p class="text-[11px] text-slate-400">Todos los endpoints están operando con normalidad.</p>

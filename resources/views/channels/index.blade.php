@@ -3,9 +3,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
                 <h2 class="font-extrabold text-2xl text-brand-dark leading-tight flex items-center gap-2.5">
-                    <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
+                    <x-reicon name="bell" class="w-6 h-6 text-brand-primary" />
                     Canales de Alerta y Notificación (Email y WhatsApp)
                 </h2>
                 <p class="text-xs text-brand-muted mt-1">Configura tu Correo Electrónico o WhatsApp para recibir avisos oportunos cuando una página web se caiga o esté lenta.</p>
@@ -16,9 +14,7 @@
                     x-data=""
                     x-on:click.prevent="$dispatch('open-modal', 'new-channel-modal')"
                     class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-primary hover:bg-blue-600 text-white text-xs font-semibold rounded-lg shadow-md shadow-brand-primary/20 transition transform active:scale-95">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
+                    <x-reicon name="add-circle" class="w-4 h-4" />
                     Nuevo Canal de Alerta
                 </button>
             </div>
@@ -80,7 +76,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="bg-white p-4 rounded-xl border border-slate-200/70 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-blue-50 text-brand-primary flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <x-reicon name="envelope" class="w-5 h-5" />
                     </div>
                     <div>
                         <h4 class="font-bold text-xs text-brand-dark">Correo Electrónico (Email)</h4>
@@ -90,7 +86,7 @@
 
                 <div class="bg-white p-4 rounded-xl border border-slate-200/70 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                        <x-reicon name="whatsapp" class="w-5 h-5" />
                     </div>
                     <div>
                         <h4 class="font-bold text-xs text-brand-dark">WhatsApp (API Oficial)</h4>
@@ -128,11 +124,13 @@
                                     <td class="p-4">
                                         @if($channel->type === 'Email')
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-brand-primary border border-blue-200">
-                                                ✉️ Correo Electrónico
+                                                <x-reicon name="envelope" class="w-3.5 h-3.5" />
+                                                <span>Correo Electrónico</span>
                                             </span>
                                         @else
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                💬 WhatsApp
+                                                <x-reicon name="whatsapp" class="w-3.5 h-3.5 text-emerald-600" />
+                                                <span>WhatsApp</span>
                                             </span>
                                         @endif
                                     </td>
@@ -164,14 +162,14 @@
                                                 class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
                                                 title="Editar destino"
                                             >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                <x-reicon name="pen-square" class="w-4 h-4" />
                                             </button>
 
                                             <form method="POST" action="{{ route('notification-channels.destroy', $channel) }}" onsubmit="return confirm('¿Deseas desvincular este canal de alertas?')">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Eliminar canal">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                    <x-reicon name="trash" class="w-4 h-4" />
                                                 </button>
                                             </form>
                                         </div>
