@@ -17,6 +17,14 @@ class AuthApiController extends Controller
      */
     public function register(Request $request): JsonResponse
     {
+        $maxUsers = (int) config('services.uptracker.max_users', 5);
+
+        if (User::count() >= $maxUsers) {
+            throw ValidationException::withMessages([
+                'email' => ["El sistema está diseñado para un máximo de {$maxUsers} personas administradoras."],
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],

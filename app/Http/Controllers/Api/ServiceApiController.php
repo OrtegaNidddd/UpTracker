@@ -35,6 +35,17 @@ class ServiceApiController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $maxServices = (int) config('services.uptracker.max_services_per_user', 30);
+
+        if ($request->user()->services()->count() >= $maxServices) {
+            return response()->json([
+                'message' => "Se alcanzó el límite máximo permitido de {$maxServices} páginas web de bajo tráfico supervisadas.",
+                'errors' => [
+                    'url' => ["No se pueden registrar más de {$maxServices} páginas web simultáneas."],
+                ],
+            ], 422);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'url' => ['required', 'string', 'url:http,https', 'max:2048'],

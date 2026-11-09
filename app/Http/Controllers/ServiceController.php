@@ -26,6 +26,13 @@ class ServiceController extends Controller
 
     public function store(Request $request)
     {
+        $maxServices = (int) config('services.uptracker.max_services_per_user', 30);
+
+        if ($request->user()->services()->count() >= $maxServices) {
+            return redirect()->route('services.index')
+                ->withErrors(['url' => "Se alcanzó el límite máximo permitido de {$maxServices} páginas web de bajo tráfico supervisadas."]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'url' => ['required', 'string', 'url:http,https', 'max:2048'],
