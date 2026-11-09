@@ -113,59 +113,71 @@ class IncidentNotificationTest extends TestCase
         });
     }
 
-    public function test_dispatch_incident_notifications_sends_webhooks_to_discord_and_telegram_channels(): void
+    public function test_dispatch_incident_notifications_sends_whatsapp_messages_to_active_whatsapp_channels(): void
     {
         Http::fake([
-            'https://discord.com/api/webhooks/*' => Http::response(['status' => 'ok'], 204),
-            'https://api.telegram.org/*' => Http::response(['ok' => true], 200),
+            'https://graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.123']]], 200),
         ]);
 
         $user = User::factory()->create();
         $service = Service::factory()->create([
             'user_id' => $user->id,
-            'name' => 'API Auth Microservice',
-            'url' => 'https://auth.internal.corp/health',
+            'name' => 'Página Web Comercio Local',
+            'url' => 'https://comercio.local.test/health',
         ]);
         $incident = Incident::factory()->create([
             'service_id' => $service->id,
             'incident_type' => 'Degraded',
-            'details' => 'Latencia de 1250ms excedió el umbral.',
+            'details' => 'Tiempo de respuesta de 1250ms excedió el umbral.',
         ]);
 
-        $discordChannel = NotificationChannel::factory()->discord()->create([
+        $whatsappChannel = NotificationChannel::factory()->whatsapp()->create([
             'user_id' => $user->id,
-            'target_destination' => 'https://discord.com/api/webhooks/12345/abcdefg',
-            'is_active' => true,
-        ]);
-
-        $telegramChannel = NotificationChannel::factory()->telegram()->create([
-            'user_id' => $user->id,
-            'target_destination' => 'https://api.telegram.org/bot123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11/sendMessage',
+            'target_destination' => '+573001234567',
             'is_active' => true,
         ]);
 
         $listener = new DispatchIncidentNotifications;
         $listener->handle(new IncidentLogged($incident, $service));
 
-        Http::assertSent(function ($request) use ($discordChannel, $service) {
-            return $request->url() === $discordChannel->target_destination
-                && $request['service_name'] === $service->name
-                && $request['incident_type'] === 'Degraded'
-                && str_contains($request['service_url'], 'auth.internal.corp');
-        });
-
-        Http::assertSent(function ($request) use ($telegramChannel, $service) {
-            return $request->url() === $telegramChannel->target_destination
+        Http::assertSent(function ($request) use ($whatsappChannel, $service) {
+            return str_contains($request->url(), 'graph.facebook.com')
+                && $request['messaging_product'] === 'whatsapp'
+                && $request['to'] === $whatsappChannel->target_destination
                 && $request['service_name'] === $service->name
                 && $request['incident_type'] === 'Degraded';
         });
     }
 
+    public function test_dispatch_incident_notifications_retries_on_http_429_rate_limit(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/*' => Http::sequence()
+                ->push(['error' => 'Too Many Requests'], 429, ['Retry-After' => '1'])
+                ->push(['messages' => [['id' => 'wamid.retry.ok']]], 200),
+        ]);
+
+        $user = User::factory()->create();
+        $service = Service::factory()->create(['user_id' => $user->id]);
+        $incident = Incident::factory()->create(['service_id' => $service->id]);
+
+        NotificationChannel::factory()->whatsapp()->create([
+            'user_id' => $user->id,
+            'target_destination' => '+573109876543',
+            'is_active' => true,
+        ]);
+
+        $listener = new DispatchIncidentNotifications;
+        $listener->handle(new IncidentLogged($incident, $service));
+
+        Http::assertSentCount(2);
+    }
+
     public function test_listener_handles_external_service_failures_gracefully(): void
     {
         Http::fake([
-            'https://failing-webhook.test/*' => fn () => throw new ConnectionException('Timeout sending webhook'),
-            'https://success-webhook.test/*' => Http::response(['ok' => true], 200),
+            'https://failing-whatsapp.test/*' => fn () => throw new ConnectionException('Timeout sending WhatsApp message'),
+            'https://success-whatsapp.test/*' => Http::response(['ok' => true], 200),
         ]);
 
         $user = User::factory()->create();
@@ -174,15 +186,15 @@ class IncidentNotificationTest extends TestCase
 
         NotificationChannel::factory()->create([
             'user_id' => $user->id,
-            'type' => 'Webhook_Discord',
-            'target_destination' => 'https://failing-webhook.test/api',
+            'type' => 'WhatsApp',
+            'target_destination' => 'https://failing-whatsapp.test/api',
             'is_active' => true,
         ]);
 
         NotificationChannel::factory()->create([
             'user_id' => $user->id,
-            'type' => 'Webhook_Telegram',
-            'target_destination' => 'https://success-webhook.test/api',
+            'type' => 'WhatsApp',
+            'target_destination' => 'https://success-whatsapp.test/api',
             'is_active' => true,
         ]);
 
@@ -190,7 +202,7 @@ class IncidentNotificationTest extends TestCase
         // Debe ejecutarse sin lanzar excepciones no controladas
         $listener->handle(new IncidentLogged($incident, $service));
 
-        Http::assertSent(fn ($request) => $request->url() === 'https://success-webhook.test/api');
+        Http::assertSent(fn ($request) => $request->url() === 'https://success-whatsapp.test/api');
     }
 
     public function test_service_alert_mail_renders_correctly(): void

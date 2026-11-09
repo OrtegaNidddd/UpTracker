@@ -56,21 +56,21 @@ class NotificationChannelWebTest extends TestCase
         ]);
     }
 
-    public function test_user_can_create_discord_webhook_channel(): void
+    public function test_user_can_create_whatsapp_channel(): void
     {
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('notification-channels.store'), [
-            'type' => 'Webhook_Discord',
-            'target_destination' => 'https://discord.com/api/webhooks/12345/abcdef',
+            'type' => 'WhatsApp',
+            'target_destination' => '+573001234567',
             'is_active' => '1',
         ]);
 
         $response->assertRedirect(route('notification-channels.index'));
         $this->assertDatabaseHas('notification_channels', [
             'user_id' => $user->id,
-            'type' => 'Webhook_Discord',
-            'target_destination' => 'https://discord.com/api/webhooks/12345/abcdef',
+            'type' => 'WhatsApp',
+            'target_destination' => '+573001234567',
         ]);
     }
 
@@ -102,8 +102,8 @@ class NotificationChannelWebTest extends TestCase
 
         $channel = NotificationChannel::create([
             'user_id' => $user->id,
-            'type' => 'Webhook_Telegram',
-            'target_destination' => 'https://api.telegram.org/bot123/sendMessage',
+            'type' => 'WhatsApp',
+            'target_destination' => '+573001234567',
             'is_active' => true,
         ]);
 

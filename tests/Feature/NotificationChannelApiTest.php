@@ -30,8 +30,8 @@ class NotificationChannelApiTest extends TestCase
         ]);
         $ch2 = NotificationChannel::factory()->create([
             'user_id' => $user2->id,
-            'type' => 'Webhook_Discord',
-            'target_destination' => 'https://discord.com/api/webhooks/123/abc',
+            'type' => 'WhatsApp',
+            'target_destination' => '+573001234567',
         ]);
 
         Sanctum::actingAs($user1);
@@ -41,10 +41,10 @@ class NotificationChannelApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
             ->assertJsonFragment(['target_destination' => 'alerts@user1.com'])
-            ->assertJsonMissing(['target_destination' => 'https://discord.com/api/webhooks/123/abc']);
+            ->assertJsonMissing(['target_destination' => '+573001234567']);
     }
 
-    public function test_user_can_create_email_and_webhook_channels_with_validation(): void
+    public function test_user_can_create_email_and_whatsapp_channels_with_validation(): void
     {
         $user = User::factory()->create();
         Sanctum::actingAs($user);
@@ -57,13 +57,21 @@ class NotificationChannelApiTest extends TestCase
         $invalidEmail->assertStatus(422)
             ->assertJsonValidationErrors(['target_destination']);
 
-        // Invalid webhook url
-        $invalidWebhook = $this->postJson('/api/notification-channels', [
-            'type' => 'Webhook_Discord',
-            'target_destination' => 'ftp://bad-url',
+        // Invalid WhatsApp destination
+        $invalidWhatsApp = $this->postJson('/api/notification-channels', [
+            'type' => 'WhatsApp',
+            'target_destination' => 'invalid-phone-or-url',
         ]);
-        $invalidWebhook->assertStatus(422)
+        $invalidWhatsApp->assertStatus(422)
             ->assertJsonValidationErrors(['target_destination']);
+
+        // Deprecated Discord/Telegram rejected
+        $deprecatedChannel = $this->postJson('/api/notification-channels', [
+            'type' => 'Webhook_Discord',
+            'target_destination' => 'https://discord.com/api/webhooks/123/abc',
+        ]);
+        $deprecatedChannel->assertStatus(422)
+            ->assertJsonValidationErrors(['type']);
 
         // Valid Email
         $validEmail = $this->postJson('/api/notification-channels', [
@@ -74,21 +82,14 @@ class NotificationChannelApiTest extends TestCase
             ->assertJsonPath('data.type', 'Email')
             ->assertJsonPath('data.target_destination', 'ops@example.com');
 
-        // Valid Webhook Discord
-        $validDiscord = $this->postJson('/api/notification-channels', [
-            'type' => 'Webhook_Discord',
-            'target_destination' => 'https://discord.com/api/webhooks/999/xyz',
+        // Valid WhatsApp phone number
+        $validWhatsApp = $this->postJson('/api/notification-channels', [
+            'type' => 'WhatsApp',
+            'target_destination' => '+573001234567',
         ]);
-        $validDiscord->assertStatus(201)
-            ->assertJsonPath('data.type', 'Webhook_Discord');
-
-        // Valid Webhook Telegram
-        $validTelegram = $this->postJson('/api/notification-channels', [
-            'type' => 'Webhook_Telegram',
-            'target_destination' => 'https://api.telegram.org/bot123/sendMessage',
-        ]);
-        $validTelegram->assertStatus(201)
-            ->assertJsonPath('data.type', 'Webhook_Telegram');
+        $validWhatsApp->assertStatus(201)
+            ->assertJsonPath('data.type', 'WhatsApp')
+            ->assertJsonPath('data.target_destination', '+573001234567');
     }
 
     public function test_user_cannot_access_or_modify_other_users_channel(): void

@@ -63,7 +63,7 @@
             @auth
                 <a href="{{ url('/dashboard') }}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-primary hover:text-blue-700 transition-colors">
                     Dashboard 
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <x-reicon name="chevron-right" class="w-4 h-4" />
                 </a>
             @else
                 <div class="hidden sm:flex items-center gap-6">
@@ -99,7 +99,7 @@
                     </h1>
                     
                     <p class="text-brand-muted text-base leading-relaxed mb-8">
-                        Supervisa la disponibilidad, latencia y salud de tus endpoints y microservicios desde un solo lugar.
+                        Plataforma web de vigilancia automática y aviso oportuno por <strong>Correo Electrónico y WhatsApp</strong> para supervisar de forma sencilla si tus páginas de internet de bajo tráfico están encendidas y funcionando bien.
                     </p>
 
                     @if (Route::has('login'))
@@ -108,12 +108,13 @@
                                 <a href="{{ url('/dashboard') }}" class="group w-full inline-flex items-center justify-center px-5 py-3.5 bg-brand-primary text-white font-semibold rounded-xl shadow-lg shadow-brand-primary/25 hover:shadow-xl hover:shadow-brand-primary/30 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
                                     <span class="flex items-center gap-2">
                                         Entrar a mi Dashboard
-                                        <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                        <x-reicon name="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                     </span>
                                 </a>
                             @else
-                                <a href="{{ route('login') }}" class="group w-full inline-flex items-center justify-center px-5 py-3.5 bg-brand-primary text-white font-semibold rounded-xl shadow-lg shadow-brand-primary/25 hover:shadow-xl hover:shadow-brand-primary/30 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
-                                    Iniciar Sesión
+                                <a href="{{ route('login') }}" class="group w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-brand-primary text-white font-semibold rounded-xl shadow-lg shadow-brand-primary/25 hover:shadow-xl hover:shadow-brand-primary/30 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
+                                    <span>Iniciar Sesión</span>
+                                    <x-reicon name="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </a>
 
                                 @if (Route::has('register'))
@@ -133,8 +134,9 @@
 
         <!-- Footer -->
         <footer class="w-full max-w-7xl mx-auto px-6 py-8 text-center flex flex-col sm:flex-row justify-between items-center gap-4 z-10">
-            <div class="text-xs font-medium text-brand-muted">
-                &copy; {{ date('Y') }} UpTracker. Todos los derechos reservados.
+            <div class="flex items-center gap-2 text-xs font-medium text-brand-muted">
+                <x-application-logo class="w-5 h-5" />
+                <span>&copy; {{ date('Y') }} UpTracker. Todos los derechos reservados.</span>
             </div>
             <div class="flex items-center gap-6 text-xs font-medium text-brand-muted">
                 <a href="{{ route('status.page') }}" class="hover:text-brand-dark transition-colors">Estado del Sistema</a>

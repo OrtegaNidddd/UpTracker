@@ -53,9 +53,7 @@
             </a>
 
             <a href="/" class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-muted hover:text-brand-primary transition-colors py-2 px-3 rounded-lg hover:bg-white/80 border border-transparent hover:border-slate-200/80">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
+                <x-reicon name="arrow-left" class="w-4 h-4" />
                 <span>Volver al inicio</span>
             </a>
         </header>
@@ -73,8 +71,9 @@
         </main>
 
         <!-- Footer -->
-        <footer class="w-full max-w-7xl mx-auto px-6 py-5 text-center text-xs text-brand-muted">
-            &copy; {{ date('Y') }} UpTracker &bull; Monitoreo de Disponibilidad y Servicios &bull; Cumplimiento Ley 1581 de 2012
+        <footer class="w-full max-w-7xl mx-auto px-6 py-5 text-center text-xs text-brand-muted flex items-center justify-center gap-2">
+            <x-application-logo class="w-4 h-4" />
+            <span>&copy; {{ date('Y') }} UpTracker &bull; Monitoreo de Disponibilidad y Servicios &bull; Cumplimiento Ley 1581 de 2012</span>
         </footer>
 
         <!-- Notificaciones y Cookies -->

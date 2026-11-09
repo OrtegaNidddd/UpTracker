@@ -23,12 +23,12 @@ class NotificationChannelApiController extends Controller
     }
 
     /**
-     * Registra un nuevo canal de alertas (Email, Webhook_Discord, Webhook_Telegram).
+     * Registra un nuevo canal de alertas (exclusivamente Email o WhatsApp).
      */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'type' => ['required', 'string', Rule::in(['Email', 'Webhook_Discord', 'Webhook_Telegram'])],
+            'type' => ['required', 'string', Rule::in(NotificationChannel::ALLOWED_TYPES)],
             'target_destination' => [
                 'required',
                 'string',
@@ -38,12 +38,8 @@ class NotificationChannelApiController extends Controller
                     if ($type === 'Email' && ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                         $fail('El destino debe ser una dirección de correo válida para el tipo Email.');
                     }
-                    if (in_array($type, ['Webhook_Discord', 'Webhook_Telegram'], true)) {
-                        $isHttpUrl = filter_var($value, FILTER_VALIDATE_URL)
-                            && (str_starts_with(strtolower($value), 'http://') || str_starts_with(strtolower($value), 'https://'));
-                        if (! $isHttpUrl) {
-                            $fail('El destino debe ser una URL válida (http/https) para los canales webhook.');
-                        }
+                    if ($type === 'WhatsApp' && ! NotificationChannel::isValidWhatsAppDestination((string) $value)) {
+                        $fail('El destino debe ser un número de WhatsApp válido (ej: +573001234567) o endpoint HTTP/HTTPS de la API de WhatsApp.');
                     }
                 },
             ],
@@ -75,7 +71,7 @@ class NotificationChannelApiController extends Controller
         $this->authorizeChannelOwner($request, $notificationChannel);
 
         $validated = $request->validate([
-            'type' => ['sometimes', 'required', 'string', Rule::in(['Email', 'Webhook_Discord', 'Webhook_Telegram'])],
+            'type' => ['sometimes', 'required', 'string', Rule::in(NotificationChannel::ALLOWED_TYPES)],
             'target_destination' => [
                 'sometimes',
                 'required',
@@ -86,12 +82,8 @@ class NotificationChannelApiController extends Controller
                     if ($type === 'Email' && ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                         $fail('El destino debe ser una dirección de correo válida para el tipo Email.');
                     }
-                    if (in_array($type, ['Webhook_Discord', 'Webhook_Telegram'], true)) {
-                        $isHttpUrl = filter_var($value, FILTER_VALIDATE_URL)
-                            && (str_starts_with(strtolower($value), 'http://') || str_starts_with(strtolower($value), 'https://'));
-                        if (! $isHttpUrl) {
-                            $fail('El destino debe ser una URL válida (http/https) para los canales webhook.');
-                        }
+                    if ($type === 'WhatsApp' && ! NotificationChannel::isValidWhatsAppDestination((string) $value)) {
+                        $fail('El destino debe ser un número de WhatsApp válido (ej: +573001234567) o endpoint HTTP/HTTPS de la API de WhatsApp.');
                     }
                 },
             ],

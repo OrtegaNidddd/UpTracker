@@ -11,7 +11,7 @@ use Illuminate\View\View;
 class NotificationChannelController extends Controller
 {
     /**
-     * Muestra la lista de canales de alerta configurados por el usuario.
+     * Muestra la lista de canales de alerta configurados por el usuario (Correo Electrónico y WhatsApp).
      */
     public function index(Request $request): View
     {
@@ -21,12 +21,12 @@ class NotificationChannelController extends Controller
     }
 
     /**
-     * Guarda un nuevo canal de notificación (Email, Webhook_Discord, Webhook_Telegram).
+     * Guarda un nuevo canal de notificación (Email o WhatsApp).
      */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'type' => ['required', 'string', Rule::in(['Email', 'Webhook_Discord', 'Webhook_Telegram'])],
+            'type' => ['required', 'string', Rule::in(NotificationChannel::ALLOWED_TYPES)],
             'target_destination' => [
                 'required',
                 'string',
@@ -34,14 +34,10 @@ class NotificationChannelController extends Controller
                 function ($attribute, $value, $fail) use ($request) {
                     $type = $request->input('type');
                     if ($type === 'Email' && ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                        $fail('El destino debe ser una dirección de correo válida para el tipo Email.');
+                        $fail('El destino debe ser una dirección de correo electrónico válida para el tipo Email.');
                     }
-                    if (in_array($type, ['Webhook_Discord', 'Webhook_Telegram'], true)) {
-                        $isHttpUrl = filter_var($value, FILTER_VALIDATE_URL)
-                            && (str_starts_with(strtolower($value), 'http://') || str_starts_with(strtolower($value), 'https://'));
-                        if (! $isHttpUrl) {
-                            $fail('El destino debe ser una URL válida (http/https) para los canales webhook.');
-                        }
+                    if ($type === 'WhatsApp' && ! NotificationChannel::isValidWhatsAppDestination((string) $value)) {
+                        $fail('El destino debe ser un número de WhatsApp válido (ej: +573001234567) o endpoint de la API de WhatsApp.');
                     }
                 },
             ],
@@ -64,7 +60,7 @@ class NotificationChannelController extends Controller
         abort_if((int) $notificationChannel->user_id !== (int) $request->user()->id, 403);
 
         $validated = $request->validate([
-            'type' => ['required', 'string', Rule::in(['Email', 'Webhook_Discord', 'Webhook_Telegram'])],
+            'type' => ['required', 'string', Rule::in(NotificationChannel::ALLOWED_TYPES)],
             'target_destination' => [
                 'required',
                 'string',
@@ -72,14 +68,10 @@ class NotificationChannelController extends Controller
                 function ($attribute, $value, $fail) use ($request) {
                     $type = $request->input('type');
                     if ($type === 'Email' && ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                        $fail('El destino debe ser una dirección de correo válida para el tipo Email.');
+                        $fail('El destino debe ser una dirección de correo electrónico válida para el tipo Email.');
                     }
-                    if (in_array($type, ['Webhook_Discord', 'Webhook_Telegram'], true)) {
-                        $isHttpUrl = filter_var($value, FILTER_VALIDATE_URL)
-                            && (str_starts_with(strtolower($value), 'http://') || str_starts_with(strtolower($value), 'https://'));
-                        if (! $isHttpUrl) {
-                            $fail('El destino debe ser una URL válida (http/https) para los canales webhook.');
-                        }
+                    if ($type === 'WhatsApp' && ! NotificationChannel::isValidWhatsAppDestination((string) $value)) {
+                        $fail('El destino debe ser un número de WhatsApp válido (ej: +573001234567) o endpoint de la API de WhatsApp.');
                     }
                 },
             ],

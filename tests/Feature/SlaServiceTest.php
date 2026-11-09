@@ -154,8 +154,8 @@ class SlaServiceTest extends TestCase
 
         NotificationChannel::create([
             'user_id' => $user->id,
-            'type' => 'Webhook_Discord',
-            'target_destination' => 'https://discord.com/api/webhooks/123/abc',
+            'type' => 'WhatsApp',
+            'target_destination' => '+573001234567',
             'is_active' => true,
         ]);
 
@@ -179,9 +179,11 @@ class SlaServiceTest extends TestCase
             return $mail->hasTo('devops@empresa.com') && $mail->slaData['status'] === 'Incumple';
         });
 
-        // Validar webhook Discord
+        // Validar envío por API de WhatsApp
         Http::assertSent(function ($request) {
-            return str_contains($request->url(), 'discord.com')
+            return str_contains($request->url(), 'graph.facebook.com')
+                && $request['messaging_product'] === 'whatsapp'
+                && $request['to'] === '+573001234567'
                 && str_contains($request['content'], 'Incumple');
         });
     }

@@ -46,8 +46,8 @@
 - **Auditoría Preventiva de SSL:** Detección en capa de transporte de la fecha de caducidad de certificados X.509 con clasificación automática (`Valid`, `Expiring_Soon`, `Expired`, `None`).
 - **Gestión Automática de Incidentes:** Creación automática de incidentes por caída (*Down*) o degradación (*Degraded* cuando se supera el umbral de latencia configurado) y resolución atómica en cuanto el servicio se recupera.
 - **Transmisión Bidireccional en Tiempo Real:** Emisión de eventos inmediatos vía **Laravel Reverb** hacia canales privados WebSocket por usuario, eliminando el sondeo redundante desde el cliente web.
-- **Despacho Multi-Canal Asíncrono:** Notificaciones desacopladas en colas hacia correo electrónico (Mailable con vista responsiva) y Webhooks (Discord y Telegram con payloads estructurados).
-- **Aislamiento Multi-Inquilino Lógico:** Seguridad a nivel de modelo y middleware donde cada usuario gestiona exclusivamente sus servicios y canales, complementado con una vista de estado pública agregada para consumidores externos.
+- **Despacho Multi-Canal Asíncrono:** Notificaciones desacopladas en colas exclusivamente hacia **Correo Electrónico (SMTP/Mailable)** y **WhatsApp (WhatsApp Cloud API / Meta Graph API)** con manejo de `HTTP 429 (Retry-After)`.
+- **Alcance Optimizado e Independencia del Servidor:** Enfocado en páginas web de baja afluencia (hasta 30 páginas supervisadas y máximo 5 personas administradoras), con medición de estadísticas de CPU aislada por proceso e independiente del servidor físico o virtual.
 - **Contenedorización Multi-Stage:** Empaquetado en imagen Docker Alpine basada en PHP 8.3 FPM, Nginx y Supervisord, capaz de gobernar servidor web, workers de cola, scheduler y servidor Reverb en un único pod de despliegue continuo.
 
 ---
@@ -88,10 +88,9 @@ graph TB
     end
 
     subgraph Externo ["Servicios y Objetivos Externos"]
-        MonitoredServices["Servicios Monitoreados (HTTP/HTTPS Endpoints)"]
+        MonitoredServices["Páginas Supervisadas (HTTP/HTTPS Endpoints)"]
         MailServer["Servidor SMTP / Mail Gateway"]
-        DiscordWebhook["Discord Webhooks API"]
-        TelegramWebhook["Telegram Webhook Endpoint"]
+        WhatsAppCloudAPI["WhatsApp Cloud API (Meta Graph API)"]
     end
 
     %% Conexiones
@@ -112,8 +111,7 @@ graph TB
     QueueWorkers -->|Sondeo HTTP HEAD/GET & SSL Audit| MonitoredServices
     QueueWorkers -->|EndpointStatusUpdated Event| ReverbServer
     QueueWorkers -->|Envío de Correo de Alerta| MailServer
-    QueueWorkers -->|POST Webhook JSON Payload| DiscordWebhook
-    QueueWorkers -->|POST Webhook JSON Payload| TelegramWebhook
+    QueueWorkers -->|POST JSON Payload| WhatsAppCloudAPI
 ```
 
 ### Ciclo de Flujo de Datos
@@ -210,17 +208,17 @@ UpTracker clasifica el estado de cada servicio mediante un evaluador de estados:
 El despacho de notificaciones está desacoplado mediante el listener asíncrono [`DispatchIncidentNotifications`](file:///c:/laragon/www/uptracker/app/Listeners/DispatchIncidentNotifications.php) (`ShouldQueue`), el cual implementa 3 intentos (`$tries = 3`) y timeout de 30 segundos:
 
 - **Canal Email:** Despacha el mailable [`ServiceAlertMail`](file:///c:/laragon/www/uptracker/app/Mail/ServiceAlertMail.php) con la plantilla Blade [`resources/views/emails/service-alert.blade.php`](file:///c:/laragon/www/uptracker/resources/views/emails/service-alert.blade.php), conteniendo la URL afectada, tipo de incidente, hora de inicio y diagnóstico.
-- **Canal Webhook (Discord & Telegram):** Emite un payload estructurado en formato JSON:
+- **Canal WhatsApp (WhatsApp Cloud API):** Emite un payload estructurado en formato JSON hacia `https://graph.facebook.com/v20.0/{phone_number_id}/messages`:
   ```json
   {
-    "event": "incident.logged",
-    "service_name": "API Pasarela de Pagos",
-    "service_url": "https://api.empresa.com/v1/health",
-    "incident_type": "Down",
-    "timestamp": "2026-09-29T13:45:00.000Z",
-    "details": "Servicio caído con código HTTP 503.",
-    "content": "⚠️ **Alerta UpTracker**: El servicio `API Pasarela de Pagos` se encuentra en estado **Down**.",
-    "text": "⚠️ Alerta UpTracker: El servicio API Pasarela de Pagos se encuentra en estado Down."
+    "messaging_product": "whatsapp",
+    "recipient_type": "individual",
+    "to": "+573001234567",
+    "type": "text",
+    "text": {
+      "preview_url": false,
+      "body": "⚠️ Alerta UpTracker: La página API Pasarela de Pagos se encuentra en estado Down."
+    }
   }
   ```
 
@@ -293,8 +291,8 @@ erDiagram
     NOTIFICATION_CHANNELS {
         bigint id PK
         bigint user_id FK
-        string type "Email, Webhook_Discord, Webhook_Telegram"
-        string target_destination "Email o URL de Webhook"
+        string type "Email, WhatsApp"
+        string target_destination "Email o Número/Endpoint WhatsApp"
         boolean is_active "Estado del canal"
         timestamps created_at_updated_at
     }
@@ -451,7 +449,7 @@ La API de UpTracker está estructurada conforme a los principios de diseño REST
 | Método | Endpoint | Rate Limit | Descripción |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/notification-channels` | 60 req/min | Lista todos los canales configurados por el usuario |
-| `POST` | `/api/notification-channels` | 60 req/min | Registra un nuevo canal (`Email`, `Webhook_Discord`, `Webhook_Telegram`) |
+| `POST` | `/api/notification-channels` | 60 req/min | Registra un nuevo canal (`Email`, `WhatsApp`) |
 | `GET` | `/api/notification-channels/{channel}` | 60 req/min | Detalle de un canal específico perteneciente al usuario |
 | `PUT` | `/api/notification-channels/{channel}` | 60 req/min | Actualiza el tipo, destino o estado del canal |
 | `DELETE` | `/api/notification-channels/{channel}` | 60 req/min | Da de baja y elimina el canal |

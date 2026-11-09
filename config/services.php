@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'whatsapp' => [
+        'api_url' => env('WHATSAPP_API_URL', 'https://graph.facebook.com/v20.0'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID', '100000000000000'),
+        'access_token' => env('WHATSAPP_ACCESS_TOKEN', 'uptracker-whatsapp-token'),
+    ],
+
+    'uptracker' => [
+        'max_users' => (int) env('UPTRACKER_MAX_USERS', 5),
+        'max_services_per_user' => (int) env('UPTRACKER_MAX_SERVICES', 30),
+        'cpu_threshold_percent' => (float) env('UPTRACKER_CPU_THRESHOLD', 15.0),
+    ],
+
 ];

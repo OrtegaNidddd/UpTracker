@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\CheckEndpointStatus;
 use App\Models\Service;
 use App\Models\User;
+use App\Services\CpuTelemetryService;
 use App\Services\SlaService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -13,12 +14,12 @@ use Throwable;
 class BenchmarkEndpointsCommand extends Command
 {
     /**
-     * Signature del comando para ejecutar el benchmark de 30 endpoints y consumo de CPU.
+     * Signature del comando para ejecutar el benchmark de 30 endpoints y consumo de CPU independiente del servidor.
      *
      * @var string
      */
     protected $signature = 'monitor:benchmark 
-                            {--endpoints=30 : Cantidad de endpoints a evaluar concurrentemente} 
+                            {--endpoints=30 : Cantidad de páginas de bajo tráfico a evaluar concurrentemente} 
                             {--rounds=2 : Cantidad de rondas de sondeo continuo}';
 
     /**
@@ -26,23 +27,25 @@ class BenchmarkEndpointsCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Ejecuta prueba de carga y concurrencia local con hasta 30 endpoints, evaluando tiempos y consumo de CPU < 15%';
+    protected $description = 'Verifica el funcionamiento con hasta 30 páginas de baja afluencia y mide el CPU de la aplicación (< 15%) independientemente del servidor';
 
-    public function handle(SlaService $slaService): int
+    public function handle(SlaService $slaService, CpuTelemetryService $cpuTelemetryService): int
     {
         $endpointsCount = (int) $this->option('endpoints');
         $rounds = (int) $this->option('rounds');
 
-        $this->components->info("Iniciando Benchmark de UpTracker: {$endpointsCount} endpoints simultáneos ({$rounds} rondas).");
+        $this->components->info("Iniciando verificación de UpTracker: {$endpointsCount} páginas web de baja afluencia ({$rounds} rondas).");
 
-        // 1. Obtener información de hardware y entorno
+        // 1. Obtener información de entorno y aislamiento independiente del servidor
         $os = PHP_OS_FAMILY;
         $phpVersion = PHP_VERSION;
-        $cpuCores = (int) (getenv('NUMBER_OF_PROCESSORS') ?: 4);
+        $cpuStats = $cpuTelemetryService->getIndependentCpuStats();
+        $allocatedCores = $cpuStats['allocated_cores'];
 
-        $this->components->twoColumnDetail('Entorno Operativo', "{$os} | PHP {$phpVersion} ({$cpuCores} núcleos)");
-        $this->components->twoColumnDetail('Condiciones de Prueba', 'Localhost / In-memory concurrent mocking');
-        $this->components->twoColumnDetail('Carga Aplicada', "{$endpointsCount} endpoints simultáneos & {$rounds} rondas");
+        $this->components->twoColumnDetail('Entorno de Ejecución', "{$os} | PHP {$phpVersion} ({$allocatedCores} núcleos asignados al contenedor)");
+        $this->components->twoColumnDetail('Modo de Medición de CPU', $cpuStats['measurement_mode']);
+        $this->components->twoColumnDetail('Dependencia de Red', 'Rendimiento sujeto a la estabilidad de la conexión a internet');
+        $this->components->twoColumnDetail('Carga Aplicada', "{$endpointsCount} páginas simultáneas (Máx. 5 usuarios)");
 
         // 2. Preparar datos de prueba
         $user = User::first() ?? User::factory()->create([

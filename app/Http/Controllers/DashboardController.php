@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\LatencyLog;
+use App\Models\User;
+use App\Services\CpuTelemetryService;
 use App\Services\SlaService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -11,11 +13,17 @@ use Illuminate\Support\Facades\Log;
 class DashboardController extends Controller
 {
     /**
-     * Muestra el panel principal con las métricas e histórico de cada servicio.
+     * Muestra el panel principal con el estado e historial de cada página web y las estadísticas de CPU independientes del servidor.
      */
-    public function index(Request $request): View
+    public function index(Request $request, CpuTelemetryService $cpuTelemetryService): View
     {
         $user = $request->user();
+        $cpuStats = $cpuTelemetryService->getIndependentCpuStats();
+        $scopeInfo = [
+            'max_services' => (int) config('services.uptracker.max_services_per_user', 30),
+            'max_users' => (int) config('services.uptracker.max_users', 5),
+            'current_users' => User::count(),
+        ];
 
         // 1. Aislamiento multiusuario estricto y precarga de incidentes abiertos
         $services = $user->services()
@@ -26,6 +34,8 @@ class DashboardController extends Controller
         if ($services->isEmpty()) {
             return view('dashboard', [
                 'services' => $services,
+                'cpuStats' => $cpuStats,
+                'scopeInfo' => $scopeInfo,
             ]);
         }
 
@@ -105,6 +115,6 @@ class DashboardController extends Controller
             'overall_rate' => $services->count() > 0 ? round(($slaCompliantCount / $services->count()) * 100, 1) : 100.0,
         ];
 
-        return view('dashboard', compact('services', 'slaSummary'));
+        return view('dashboard', compact('services', 'slaSummary', 'cpuStats', 'scopeInfo'));
     }
 }

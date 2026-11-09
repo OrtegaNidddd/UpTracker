@@ -168,7 +168,7 @@ class SlaService
     }
 
     /**
-     * Despacha notificaciones a los canales configurados (Email, Discord, Telegram).
+     * Despacha notificaciones preventivas o de incumplimiento exclusivamente por Correo Electrónico y WhatsApp.
      */
     public function dispatchSlaAlert(Service $service, array $slaData): void
     {
@@ -181,7 +181,7 @@ class SlaService
             try {
                 match ($channel->type) {
                     'Email' => Mail::to($channel->target_destination)->send(new SlaAlertMail($service, $slaData)),
-                    'Webhook_Discord', 'Webhook_Telegram' => $this->sendWebhookSlaAlert($channel, $service, $slaData),
+                    'WhatsApp' => $this->sendWhatsAppSlaAlert($channel, $service, $slaData),
                     default => null,
                 };
             } catch (Throwable $e) {
@@ -191,20 +191,31 @@ class SlaService
     }
 
     /**
-     * Envía payload compatible con Discord y Telegram para alertas SLA.
+     * Envía mensaje a través de la API de WhatsApp (WhatsApp Cloud API) para alertas preventivas o de incumplimiento SLA/SLO.
      */
-    protected function sendWebhookSlaAlert(NotificationChannel $channel, Service $service, array $slaData): void
+    protected function sendWhatsAppSlaAlert(NotificationChannel $channel, Service $service, array $slaData): void
     {
         $icon = $slaData['status'] === 'Incumple' ? '🚨' : '⚠️';
-        $title = "{$icon} Alerta de Nivel de Servicio ({$slaData['status']}) - UpTracker";
+        $title = "{$icon} Alerta de Estabilidad ({$slaData['status']}) - UpTracker";
         $text = "{$title}\n"
-            ."Servicio: {$service->name} ({$service->url})\n"
-            ."SLI Actual: {$slaData['uptime_sli']}% (Objetivo SLO: {$slaData['slo_availability_target']}%)\n"
-            ."Presupuesto de Error Restante: {$slaData['error_budget_percentage']}%\n"
-            ."Latencia Promedio: {$slaData['avg_latency_ms']} ms (Objetivo: <= {$slaData['slo_latency_target_ms']} ms)\n"
+            ."Página web: {$service->name} ({$service->url})\n"
+            ."Funcionamiento actual (SLI): {$slaData['uptime_sli']}% (Meta SLO: {$slaData['slo_availability_target']}%)\n"
+            ."Margen de error restante: {$slaData['error_budget_percentage']}%\n"
+            ."Velocidad promedio: {$slaData['avg_latency_ms']} ms (Meta: <= {$slaData['slo_latency_target_ms']} ms)\n"
             ."Detalle: {$slaData['message']}";
 
+        $endpoint = $channel->resolveWhatsAppEndpoint();
+        $token = (string) config('services.whatsapp.access_token', 'uptracker-whatsapp-token');
+
         $payload = [
+            'messaging_product' => 'whatsapp',
+            'recipient_type' => 'individual',
+            'to' => $channel->target_destination,
+            'type' => 'text',
+            'text' => [
+                'preview_url' => false,
+                'body' => $text,
+            ],
             'event' => 'sla.alert',
             'service_name' => $service->name,
             'service_url' => $service->url,
@@ -213,11 +224,13 @@ class SlaService
             'slo_target' => $slaData['slo_availability_target'],
             'error_budget_percentage' => $slaData['error_budget_percentage'],
             'content' => $text,
-            'text' => $text,
             'timestamp' => now()->toISOString(),
         ];
 
-        Http::timeout(10)->asJson()->post($channel->target_destination, $payload);
+        Http::timeout(10)
+            ->withToken($token)
+            ->asJson()
+            ->post($endpoint, $payload);
     }
 
     /**

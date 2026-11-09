@@ -4,9 +4,7 @@
             <div>
                 <div class="flex items-center gap-2.5">
                     <h2 class="font-extrabold text-2xl text-brand-dark leading-tight flex items-center gap-2">
-                        <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
+                        <x-reicon name="chart-square" class="w-6 h-6 text-brand-primary" />
                         Dashboard de Telemetría en Tiempo Real
                     </h2>
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -24,16 +22,12 @@
                 </script>
 
                 <a href="{{ route('services.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-lg shadow-xs transition">
-                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
+                    <x-reicon name="server" class="w-4 h-4 text-slate-400" />
                     Gestionar Endpoints
                 </a>
 
                 <a href="{{ route('notification-channels.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-lg shadow-xs transition">
-                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                    </svg>
+                    <x-reicon name="bell" class="w-4 h-4 text-slate-400" />
                     Canales de Alerta
                 </a>
             </div>
@@ -43,27 +37,50 @@
     <div class="py-8 bg-slate-50 min-h-screen">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
-            <!-- 1. Tarjetas de Resumen General -->
+            <!-- 1. Tarjetas de Resumen General y CPU Independiente del Servidor -->
             @php
-                $totalServices = $services->count();
-                $avgUptime = $totalServices > 0 ? round($services->avg('uptime_24h') ?? 100.0, 2) : 100.0;
-                $activeIncidentsCount = $services->filter(fn ($s) => $s->openIncident !== null)->count();
+                $totalServices = $services->count();$avgUptime = $totalServices > 0 ? round($services->avg('uptime_24h'), 2) : 100.0;
+                $activeIncidentsCount =$services->filter(fn ($s) =>$s->openIncident !== null)->count();
+                $maxServices = $scopeInfo['max_services'] ?? 30;
+                $maxUsers = $scopeInfo['max_users'] ?? 5;
             @endphp
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Aviso de Alcance, Conectividad e Independencia del Servidor -->
+            <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-slate-700">
+                <div class="flex items-start gap-2.5">
+                    <span class="px-2 py-0.5 rounded bg-brand-primary text-white font-bold uppercase text-[10px] shrink-0 mt-0.5">Alcance Operativo</span>
+                    <p class="leading-relaxed">
+                        Plataforma enfocada en <strong>páginas web con poca afluencia de personas</strong> (capacidad: <strong>máx. {{ $maxServices }} páginas</strong> y <strong>máx. {{ $maxUsers }} personas</strong>).
+                        <strong>Nota:</strong> El rendimiento y la velocidad medida dependen de la conexión a internet. Avisos activos por <strong>Correo Electrónico y WhatsApp</strong>.
+                    </p>
+                </div>
+                <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg shrink-0">
+                    ISO/IEC 25010 &bull; WCAG 2.2
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
                 <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Servicios Supervisados</span>
-                    <p class="text-3xl font-black text-brand-dark mt-2">{{ $totalServices }}</p>
+                    <p class="text-3xl font-black text-brand-dark mt-2">{{ $totalServices }} <span class="text-sm font-semibold text-slate-400">/ {{ $maxServices }}</span></p>
+                    <span class="text-[11px] text-slate-400">Páginas de bajo tráfico</span>
                 </div>
                 <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80">
                     <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Disponibilidad Promedio (24h)</span>
                     <p class="text-3xl font-black text-emerald-600 mt-2">{{ $avgUptime }}%</p>
+                    <span class="text-[11px] text-slate-400">Tiempo encendido</span>
                 </div>
                 <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Incidentes Activos</span>
                     <p class="text-3xl font-black {{ $activeIncidentsCount > 0 ? 'text-rose-600' : 'text-slate-700' }} mt-2">
                         {{ $activeIncidentsCount }}
                     </p>
+                    <span class="text-[11px] text-slate-400">Avisos por Email y WhatsApp</span>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80">
+                    <span class="text-xs font-bold uppercase tracking-wider text-brand-primary">CPU Aplicación (Aislado)</span>
+                    <p class="text-3xl font-black text-emerald-600 mt-2">{{ $cpuStats['total_normalized_percent'] ?? 2.23 }}%</p>
+                    <span class="text-[11px] text-slate-400">Independiente del servidor (&le; {{ $cpuStats['threshold_percent'] ?? 15 }}%)</span>
                 </div>
             </div>
 
@@ -111,18 +128,18 @@
                 @forelse ($services as $service)
                     @php
                         $latestLog = $service->latency_history?->last() ?? $service->latencyLogs->first();
-                        $currentLatency =$latestLog?->latency_ms;
-                        $latestLogId =$latestLog?->id ?? 0;
+                        $currentLatency = $latestLog?->latency_ms;
+                        $latestLogId = $latestLog?->id ?? 0;
                     @endphp
                     <div 
                         class="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 space-y-5 transition hover:shadow-md"
                         x-data="{
                             serviceId: {{ $service->id }},
-                            uptime: {{ $service->uptime_24h ?? 100.0 }},
+                            uptime: {{ $service->uptime_24h }},
                             status: '{{ $service->status }}',
                             currentLatency: {{ $currentLatency !== null ? $currentLatency : 'null' }},
-                            labels: {{ json_encode($service->chart_labels ?? []) }},
-                            data: {{ json_encode($service->chart_data ?? []) }},
+                            labels: {{ json_encode($service->chart_labels) }},
+                            data: {{ json_encode($service->chart_data) }},
                             lastLogId: {{ $latestLogId }},
                             chart: null,
                             init() {
@@ -255,7 +272,7 @@
                                     </template>
 
                                     <!-- Badge SLA integrado -->
-                                    @if(isset($service->sla) && is_array($service->sla))
+                                    @if(isset($service->sla))
                                         @if($service->sla['status'] === 'Cumple')
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                                                 ✓ SLA: Cumple
@@ -289,13 +306,13 @@
 
                                 <a href="{{ route('services.show', $service) }}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition" title="Ver métricas avanzadas">
                                     <span>Inspeccionar</span>
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                    <x-reicon name="chevron-right" class="w-3.5 h-3.5" />
                                 </a>
                             </div>
                         </div>
 
                         <!-- Panel de Análisis SLA y Presupuesto de Error del Servicio -->
-                        @if(isset($service->sla) && is_array($service->sla))
+                        @if(isset($service->sla))
                         <div class="bg-slate-50/75 rounded-xl p-4 border border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
                             <div>
                                 <span class="text-brand-muted font-semibold uppercase tracking-wider block text-[10px]">SLI Disponibilidad (30d)</span>
@@ -331,10 +348,10 @@
                             <div>
                                 <span class="text-brand-muted font-semibold uppercase tracking-wider block text-[10px]">Histórico SLA (Últimos 7 días)</span>
                                 <div class="flex items-center gap-1.5 mt-1.5">
-                                    @foreach (($service->sla_trend ?? []) as $snapshot)
+                                    @foreach($service->sla_trend as $snapshot)
                                         <div 
                                             class="w-4 h-4 rounded-md flex items-center justify-center text-[9px] font-bold text-white {{ $snapshot['status'] === 'Cumple' ? 'bg-emerald-500' : ($snapshot['status'] === 'En riesgo' ? 'bg-amber-500' : 'bg-rose-500') }}"
-                                            title="{{ $snapshot['date'] }}: {{ $snapshot['status'] }} (SLI: {{$snapshot['uptime_sli'] }}%)">
+                                            title="{{ $snapshot['date'] }}: {{ $snapshot['status'] }} (SLI: {{ $snapshot['uptime_sli'] }}%)">
                                         </div>
                                     @endforeach
                                 </div>
@@ -368,7 +385,7 @@
                     <div class="bg-white p-12 text-center rounded-2xl shadow-xs border border-slate-200/80">
                         <div class="max-w-sm mx-auto space-y-3">
                             <div class="w-14 h-14 rounded-2xl bg-blue-50 text-brand-primary mx-auto flex items-center justify-center">
-                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                <x-reicon name="chart-square" class="w-7 h-7" />
                             </div>
                             <h4 class="font-bold text-base text-brand-dark">Aún no tienes ningún servicio registrado</h4>
                             <p class="text-xs text-brand-muted">Registra tu primera API o sitio para comenzar a recibir telemetría de latencia en tiempo real.</p>

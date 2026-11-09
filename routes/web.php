@@ -50,7 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/services/{service}', [ServiceController::class, 'update'])->name('services.update');
     Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
 
-    // Módulo de Canales de Alerta y Notificación (Correo, Discord, Telegram)
+    // Módulo de Canales de Alerta y Notificación (Exclusivamente Correo Electrónico y WhatsApp)
     Route::get('/notification-channels', [NotificationChannelWebController::class, 'index'])->name('notification-channels.index');
     Route::post('/notification-channels', [NotificationChannelWebController::class, 'store'])->name('notification-channels.store');
     Route::patch('/notification-channels/{notificationChannel}', [NotificationChannelWebController::class, 'update'])->name('notification-channels.update');

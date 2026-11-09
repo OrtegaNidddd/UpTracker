@@ -17,7 +17,7 @@ use Throwable;
 class NotificationChannelWebController extends Controller
 {
     /**
-     * Muestra la interfaz de administración de canales de alerta (Email, Discord, Telegram).
+     * Muestra la interfaz de administración de canales de alerta (exclusivamente Correo Electrónico y WhatsApp).
      */
     public function index(Request $request): View
     {
@@ -27,12 +27,12 @@ class NotificationChannelWebController extends Controller
     }
 
     /**
-     * Registra un nuevo canal de notificación.
+     * Registra un nuevo canal de notificación (Email o WhatsApp).
      */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'type' => ['required', 'string', Rule::in(['Email', 'Webhook_Discord', 'Webhook_Telegram'])],
+            'type' => ['required', 'string', Rule::in(NotificationChannel::ALLOWED_TYPES)],
             'target_destination' => [
                 'required',
                 'string',
@@ -42,12 +42,8 @@ class NotificationChannelWebController extends Controller
                     if ($type === 'Email' && ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                         $fail('El destino debe ser un correo electrónico válido.');
                     }
-                    if (in_array($type, ['Webhook_Discord', 'Webhook_Telegram'], true)) {
-                        $isHttpUrl = filter_var($value, FILTER_VALIDATE_URL)
-                            && (str_starts_with(strtolower($value), 'http://') || str_starts_with(strtolower($value), 'https://'));
-                        if (! $isHttpUrl) {
-                            $fail('El destino debe ser una URL válida (http/https) para el webhook.');
-                        }
+                    if ($type === 'WhatsApp' && ! NotificationChannel::isValidWhatsAppDestination((string) $value)) {
+                        $fail('El destino debe ser un número de WhatsApp válido (ej: +573001234567) o endpoint de la API de WhatsApp.');
                     }
                 },
             ],
@@ -91,7 +87,7 @@ class NotificationChannelWebController extends Controller
     }
 
     /**
-     * Envía una notificación de prueba en tiempo real para verificar el canal.
+     * Envía una notificación de prueba en tiempo real para verificar el canal (Correo Electrónico o WhatsApp).
      */
     public function test(Request $request, NotificationChannel $notificationChannel): RedirectResponse
     {
@@ -99,23 +95,29 @@ class NotificationChannelWebController extends Controller
 
         try {
             $mockService = new Service([
-                'name' => 'Servicio de Prueba UpTracker',
+                'name' => 'Página Web de Prueba UpTracker',
                 'url' => 'https://uptracker.test/api/health',
             ]);
             $mockIncident = new Incident([
                 'incident_type' => 'Degraded',
                 'started_at' => now(),
-                'details' => 'Envío de prueba para verificar conectividad del canal de alerta.',
+                'details' => 'Envío de prueba para verificar que los avisos de UpTracker lleguen correctamente.',
             ]);
 
             match ($notificationChannel->type) {
                 'Email' => Mail::to($notificationChannel->target_destination)
                     ->send(new ServiceAlertMail($mockIncident, $mockService)),
-                'Webhook_Discord', 'Webhook_Telegram' => Http::timeout(5)
+                'WhatsApp' => Http::timeout(5)
+                    ->withToken((string) config('services.whatsapp.access_token', 'uptracker-whatsapp-token'))
                     ->asJson()
-                    ->post($notificationChannel->target_destination, [
-                        'content' => '🔔 **[PRUEBA UPTRACKER]** Conexión exitosa con el canal de notificación '.$notificationChannel->type.'.',
-                        'text' => '🔔 [PRUEBA UPTRACKER] Conexión exitosa con el canal de notificación '.$notificationChannel->type.'.',
+                    ->post($notificationChannel->resolveWhatsAppEndpoint(), [
+                        'messaging_product' => 'whatsapp',
+                        'to' => $notificationChannel->target_destination,
+                        'type' => 'text',
+                        'text' => [
+                            'body' => '🔔 [PRUEBA UPTRACKER] Conexión exitosa con el canal de avisos por WhatsApp.',
+                        ],
+                        'content' => '🔔 [PRUEBA UPTRACKER] Conexión exitosa con el canal de avisos por WhatsApp.',
                         'timestamp' => now()->toISOString(),
                     ]),
                 default => null,

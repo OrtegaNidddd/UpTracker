@@ -27,7 +27,7 @@ class DispatchIncidentNotifications implements ShouldQueue
     public int $timeout = 30;
 
     /**
-     * Procesa el evento de incidente y despacha correos y webhooks.
+     * Procesa el evento de incidente y despacha avisos exclusivamente por Correo Electrónico y WhatsApp.
      */
     public function handle(IncidentLogged $event): void
     {
@@ -40,7 +40,7 @@ class DispatchIncidentNotifications implements ShouldQueue
             try {
                 match ($channel->type) {
                     'Email' => $this->sendEmail($channel, $event),
-                    'Webhook_Discord', 'Webhook_Telegram' => $this->sendWebhook($channel, $event),
+                    'WhatsApp' => $this->sendWhatsApp($channel, $event),
                     default => null,
                 };
             } catch (Throwable $e) {
@@ -54,7 +54,7 @@ class DispatchIncidentNotifications implements ShouldQueue
     }
 
     /**
-     * Envía correo de alerta al destinatario del canal.
+     * Envía correo electrónico de alerta al destinatario del canal.
      */
     protected function sendEmail(NotificationChannel $channel, IncidentLogged $event): void
     {
@@ -63,27 +63,62 @@ class DispatchIncidentNotifications implements ShouldQueue
     }
 
     /**
-     * Envía petición POST con payload estructurado hacia el webhook de destino.
+     * Envía notificación mediante la API de WhatsApp (WhatsApp Cloud API / Meta Graph API)
+     * con soporte de reintentos y retroceso exponencial ante respuestas HTTP 429 (Retry-After).
      */
-    protected function sendWebhook(NotificationChannel $channel, IncidentLogged $event): void
+    protected function sendWhatsApp(NotificationChannel $channel, IncidentLogged $event): void
     {
         $service = $event->service;
         $incident = $event->incident;
+        $endpoint = $channel->resolveWhatsAppEndpoint();
+        $token = (string) config('services.whatsapp.access_token', 'uptracker-whatsapp-token');
+
+        $messageBody = "⚠️ Alerta UpTracker: La página {$service->name} ({$service->url}) presenta estado {$incident->incident_type}. Detalle: {$incident->details}";
 
         $payload = [
+            'messaging_product' => 'whatsapp',
+            'recipient_type' => 'individual',
+            'to' => $channel->target_destination,
+            'type' => 'text',
+            'text' => [
+                'preview_url' => false,
+                'body' => $messageBody,
+            ],
             'event' => 'incident.logged',
             'service_name' => $service->name,
             'service_url' => $service->url,
             'incident_type' => $incident->incident_type,
             'timestamp' => $incident->started_at?->toISOString() ?? now()->toISOString(),
             'details' => $incident->details,
-            // Campos amigables con APIs de mensajería (Discord / Telegram)
-            'content' => "⚠️ **Alerta UpTracker**: El servicio `{$service->name}` se encuentra en estado **{$incident->incident_type}** ({$service->url}).",
-            'text' => "⚠️ Alerta UpTracker: El servicio {$service->name} se encuentra en estado {$incident->incident_type} ({$service->url}).",
+            'content' => $messageBody,
         ];
 
-        Http::timeout(10)
-            ->asJson()
-            ->post($channel->target_destination, $payload);
+        $maxAttempts = 3;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            $response = Http::timeout(10)
+                ->withToken($token)
+                ->asJson()
+                ->post($endpoint, $payload);
+
+            if ($response->status() !== 429) {
+                return;
+            }
+
+            $retryAfterHeader = $response->header('Retry-After');
+            $backoffSeconds = is_numeric($retryAfterHeader)
+                ? min(5, max(1, (int) $retryAfterHeader))
+                : (int) pow(2, $attempt - 1);
+
+            Log::warning("HTTP 429 Too Many Requests en API de WhatsApp para el canal [{$channel->id}]. Reintento #{$attempt} con retroceso exponencial ({$backoffSeconds}s).", [
+                'channel_id' => $channel->id,
+                'retry_after' => $retryAfterHeader,
+                'attempt' => $attempt,
+            ]);
+
+            if ($attempt < $maxAttempts && ! app()->runningUnitTests()) {
+                sleep($backoffSeconds);
+            }
+        }
     }
 }
