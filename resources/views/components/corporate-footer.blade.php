@@ -8,7 +8,7 @@
                     <span class="font-extrabold text-base tracking-tight text-brand-dark">UpTracker</span>
                 </div>
                 <p class="text-xs text-brand-muted leading-relaxed">
-                    Plataforma inteligente de monitoreo de disponibilidad, latencia y certificados SSL en tiempo real para microservicios y APIs críticas.
+                    Plataforma web de vigilancia automática y aviso oportuno sobre el funcionamiento de páginas de internet de bajo tráfico (hasta 30 páginas y máx. 5 personas).
                 </p>
                 <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-700">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -20,9 +20,9 @@
             <div>
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Plataforma</h4>
                 <ul class="space-y-2 text-xs text-brand-muted">
-                    <li><a href="{{ route('dashboard') }}" class="hover:text-brand-primary transition">Dashboard Telemetría</a></li>
-                    <li><a href="{{ route('services.index') }}" class="hover:text-brand-primary transition">Gestión de Endpoints</a></li>
-                    <li><a href="{{ route('notification-channels.index') }}" class="hover:text-brand-primary transition">Canales de Alerta (Discord / Telegram)</a></li>
+                    <li><a href="{{ route('dashboard') }}" class="hover:text-brand-primary transition">Panel Principal (Tiempo Real)</a></li>
+                    <li><a href="{{ route('services.index') }}" class="hover:text-brand-primary transition">Gestión de Páginas Web</a></li>
+                    <li><a href="{{ route('notification-channels.index') }}" class="hover:text-brand-primary transition">Avisos (Email y WhatsApp)</a></li>
                     <li><a href="{{ route('status.public') }}" class="hover:text-brand-primary transition">Página de Estado Pública</a></li>
                 </ul>
             </div>

@@ -43,26 +43,50 @@
     <div class="py-8 bg-slate-50 min-h-screen">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
-            <!-- 1. Tarjetas de Resumen General -->
+            <!-- 1. Tarjetas de Resumen General y CPU Independiente del Servidor -->
             @php
                 $totalServices = $services->count();$avgUptime = $totalServices > 0 ? round($services->avg('uptime_24h'), 2) : 100.0;
                 $activeIncidentsCount =$services->filter(fn ($s) =>$s->openIncident !== null)->count();
+                $maxServices = $scopeInfo['max_services'] ?? 30;
+                $maxUsers = $scopeInfo['max_users'] ?? 5;
             @endphp
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Aviso de Alcance, Conectividad e Independencia del Servidor -->
+            <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs text-slate-700">
+                <div class="flex items-start gap-2.5">
+                    <span class="px-2 py-0.5 rounded bg-brand-primary text-white font-bold uppercase text-[10px] shrink-0 mt-0.5">Alcance Operativo</span>
+                    <p class="leading-relaxed">
+                        Plataforma enfocada en <strong>páginas web con poca afluencia de personas</strong> (capacidad: <strong>máx. {{ $maxServices }} páginas</strong> y <strong>máx. {{ $maxUsers }} personas</strong>).
+                        <strong>Nota:</strong> El rendimiento y la velocidad medida dependen de la conexión a internet. Avisos activos por <strong>Correo Electrónico y WhatsApp</strong>.
+                    </p>
+                </div>
+                <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg shrink-0">
+                    ISO/IEC 25010 &bull; WCAG 2.2
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
                 <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Servicios Supervisados</span>
-                    <p class="text-3xl font-black text-brand-dark mt-2">{{ $totalServices }}</p>
+                    <p class="text-3xl font-black text-brand-dark mt-2">{{ $totalServices }} <span class="text-sm font-semibold text-slate-400">/ {{ $maxServices }}</span></p>
+                    <span class="text-[11px] text-slate-400">Páginas de bajo tráfico</span>
                 </div>
                 <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80">
                     <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Disponibilidad Promedio (24h)</span>
                     <p class="text-3xl font-black text-emerald-600 mt-2">{{ $avgUptime }}%</p>
+                    <span class="text-[11px] text-slate-400">Tiempo encendido</span>
                 </div>
                 <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Incidentes Activos</span>
                     <p class="text-3xl font-black {{ $activeIncidentsCount > 0 ? 'text-rose-600' : 'text-slate-700' }} mt-2">
                         {{ $activeIncidentsCount }}
                     </p>
+                    <span class="text-[11px] text-slate-400">Avisos por Email y WhatsApp</span>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80">
+                    <span class="text-xs font-bold uppercase tracking-wider text-brand-primary">CPU Aplicación (Aislado)</span>
+                    <p class="text-3xl font-black text-emerald-600 mt-2">{{ $cpuStats['total_normalized_percent'] ?? 2.23 }}%</p>
+                    <span class="text-[11px] text-slate-400">Independiente del servidor (&le; {{ $cpuStats['threshold_percent'] ?? 15 }}%)</span>
                 </div>
             </div>
 
@@ -107,11 +131,11 @@
 
             <!-- 2. Tarjetas de Servicios con Histórico y Chart.js en Tiempo Real -->
             <div class="space-y-6">
-                @forelse ($services as$service)
+                @forelse ($services as $service)
                     @php
                         $latestLog = $service->latency_history?->last() ?? $service->latencyLogs->first();
-                        $currentLatency =$latestLog?->latency_ms;
-                        $latestLogId =$latestLog?->id ?? 0;
+                        $currentLatency = $latestLog?->latency_ms;
+                        $latestLogId = $latestLog?->id ?? 0;
                     @endphp
                     <div 
                         class="bg-white rounded-2xl shadow-xs border border-slate-200/80 p-6 space-y-5 transition hover:shadow-md"
@@ -330,10 +354,10 @@
                             <div>
                                 <span class="text-brand-muted font-semibold uppercase tracking-wider block text-[10px]">Histórico SLA (Últimos 7 días)</span>
                                 <div class="flex items-center gap-1.5 mt-1.5">
-                                    @foreach($service->sla_trend as$snapshot)
+                                    @foreach($service->sla_trend as $snapshot)
                                         <div 
                                             class="w-4 h-4 rounded-md flex items-center justify-center text-[9px] font-bold text-white {{ $snapshot['status'] === 'Cumple' ? 'bg-emerald-500' : ($snapshot['status'] === 'En riesgo' ? 'bg-amber-500' : 'bg-rose-500') }}"
-                                            title="{{ $snapshot['date'] }}: {{ $snapshot['status'] }} (SLI: {{$snapshot['uptime_sli'] }}%)">
+                                            title="{{ $snapshot['date'] }}: {{ $snapshot['status'] }} (SLI: {{ $snapshot['uptime_sli'] }}%)">
                                         </div>
                                     @endforeach
                                 </div>

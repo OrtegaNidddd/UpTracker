@@ -276,7 +276,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-4">
                     <div>
                         <h3 class="font-bold text-lg text-brand-dark">Curva de Latencia de Red en Vivo</h3>
-                        <p class="text-xs text-brand-muted">Historial cronológico de sondeos conectados vía WebSockets</p>
+                        <p class="text-xs text-brand-muted">Registro de Sondeos de Red conectados vía WebSockets (el rendimiento y tiempo de respuesta dependen de la conexión a internet)</p>
                     </div>
                     <div class="flex items-center gap-4 text-xs">
                         <span class="flex items-center gap-1.5 text-slate-600">
@@ -322,7 +322,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-slate-700">
-                                @forelse($service->slaHistories as$history)
+                                @forelse($service->slaHistories as $history)
                                     <tr class="hover:bg-slate-50/50">
                                         <td class="p-3.5 font-bold text-slate-800">{{ $history->snapshot_date->format('Y-m-d') }}</td>
                                         <td class="p-3.5 font-bold">{{ $history->uptime_sli }}%</td>
@@ -367,7 +367,7 @@
                     </div>
 
                     <div class="p-5 flex-1 space-y-3 overflow-y-auto max-h-[420px]">
-                        @forelse ($service->incidents as$incident)
+                        @forelse ($service->incidents as $incident)
                             <div class="p-4 rounded-xl border {{ $incident->resolved_at === null ? 'bg-rose-50/50 border-rose-200' : 'bg-slate-50/60 border-slate-200' }} transition">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">

@@ -5,7 +5,7 @@
                 <svg class="w-6 h-6 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
-                Canales de Alerta y Notificación
+                Canales de Aviso Oportuno (Correo Electrónico y WhatsApp)
             </h2>
 
             <button 
@@ -42,11 +42,11 @@
             <!-- Explicación del alcance de notificaciones según directriz docente -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-3">
                 <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-1 text-xs font-bold rounded-md bg-blue-100 text-blue-800 uppercase">Alcance Real Implementado</span>
-                    <h3 class="font-bold text-slate-800 text-base">Notificaciones Demostrables: Correo Electrónico, Discord y Telegram</h3>
+                    <span class="px-2.5 py-1 text-xs font-bold rounded-md bg-blue-100 text-blue-800 uppercase">Canales Oficiales de Aviso</span>
+                    <h3 class="font-bold text-slate-800 text-base">Notificaciones Exclusivas por Correo Electrónico y WhatsApp</h3>
                 </div>
                 <p class="text-sm text-slate-600 leading-relaxed">
-                    UpTracker despacha alertas en tiempo real ante <strong>caídas de endpoints</strong>, <strong>degradación de latencia</strong> y <strong>alertas preventivas de riesgo/incumplimiento de SLA/SLO</strong>. A continuación puedes registrar tus destinos y ejecutar pruebas instantáneas con el botón <em>"Probar Conexión"</em>.
+                    UpTracker envía avisos claros y fáciles de entender exclusivamente a través de <strong>Correo Electrónico (Email)</strong> y la <strong>API de WhatsApp (WhatsApp Cloud API)</strong> cuando una página web se cae, responde muy lento o entra en estado <strong>En riesgo</strong>. La velocidad de entrega depende de la conexión a internet.
                 </p>
             </div>
 
@@ -62,7 +62,7 @@
                         <thead class="bg-slate-50 text-brand-muted uppercase text-xs">
                             <tr>
                                 <th class="p-4">Tipo</th>
-                                <th class="p-4">Destino / Webhook</th>
+                                <th class="p-4">Correo o Número de WhatsApp</th>
                                 <th class="p-4">Estado</th>
                                 <th class="p-4">Creado</th>
                                 <th class="p-4 text-right">Acciones</th>
@@ -76,13 +76,9 @@
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                                                 ✉️ Correo Electrónico
                                             </span>
-                                        @elseif($channel->type === 'Webhook_Discord')
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                🎮 Discord Webhook
-                                            </span>
                                         @else
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
-                                                ✈️ Telegram Webhook
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                💬 WhatsApp (API Oficial)
                                             </span>
                                         @endif
                                     </td>
@@ -134,7 +130,7 @@
                             @empty
                                 <tr>
                                     <td colspan="5" class="p-8 text-center text-brand-muted">
-                                        No has configurado canales de notificación aún. Agrega un correo o webhook de Discord/Telegram para recibir alertas.
+                                        No has configurado canales de aviso aún. Agrega tu Correo Electrónico o número de WhatsApp para recibir alertas.
                                     </td>
                                 </tr>
                             @endforelse
@@ -154,28 +150,27 @@
                 Configurar Nuevo Canal de Alerta
             </h2>
             <p class="mt-1 text-sm text-brand-muted">
-                Selecciona la vía de despacho e ingresa la dirección o URL receptora.
+                Selecciona si deseas recibir el aviso por Correo Electrónico o por WhatsApp.
             </p>
 
             <div class="mt-6 space-y-4">
                 <div>
-                    <x-input-label for="type" value="Tipo de Canal" class="text-brand-slate" />
+                    <x-input-label for="type" value="Medio de Aviso" class="text-brand-slate" />
                     <select id="type" name="type" class="mt-1 block w-full border-gray-300 focus:border-brand-primary focus:ring-brand-primary rounded-md shadow-sm text-sm text-brand-dark" required>
-                        <option value="Email" @selected(old('type') === 'Email')>✉️ Correo Electrónico (SMTP)</option>
-                        <option value="Webhook_Discord" @selected(old('type') === 'Webhook_Discord')>🎮 Discord Webhook (URL)</option>
-                        <option value="Webhook_Telegram" @selected(old('type') === 'Webhook_Telegram')>✈️ Telegram Webhook / Bot API (URL)</option>
+                        <option value="Email" @selected(old('type') === 'Email')>✉️ Correo Electrónico (Email)</option>
+                        <option value="WhatsApp" @selected(old('type') === 'WhatsApp')>💬 WhatsApp (WhatsApp Cloud API)</option>
                     </select>
                     <x-input-error :messages="$errors->get('type')" class="mt-2" />
                 </div>
 
                 <div>
-                    <x-input-label for="target_destination" value="Destino (Email o URL del Webhook)" class="text-brand-slate" />
+                    <x-input-label for="target_destination" value="Destino (Correo Electrónico o Número de WhatsApp)" class="text-brand-slate" />
                     <x-text-input 
                         id="target_destination" 
                         name="target_destination" 
                         type="text" 
                         class="mt-1 block w-full focus:border-brand-primary focus:ring-brand-primary font-mono text-xs" 
-                        placeholder="ej: alertas@miempresa.com o https://discord.com/api/webhooks/..." 
+                        placeholder="ej: alertas@minegocio.com o +573001234567" 
                         :value="old('target_destination')" 
                         required 
                     />
@@ -184,7 +179,7 @@
 
                 <div class="flex items-center gap-2 pt-2">
                     <input type="checkbox" id="is_active" name="is_active" value="1" class="rounded border-gray-300 text-brand-primary focus:ring-brand-primary" checked>
-                    <label for="is_active" class="text-sm font-medium text-slate-700">Activar canal inmediatamente para alertas e incidentes</label>
+                    <label for="is_active" class="text-sm font-medium text-slate-700">Activar canal inmediatamente para recibir avisos</label>
                 </div>
             </div>
 

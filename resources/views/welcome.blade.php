@@ -97,7 +97,7 @@
                     </h1>
                     
                     <p class="text-brand-muted text-base leading-relaxed mb-8">
-                        Supervisa la disponibilidad, latencia y salud de tus endpoints y microservicios desde un solo lugar.
+                        Plataforma web de vigilancia automática y aviso oportuno por <strong>Correo Electrónico y WhatsApp</strong> para supervisar de forma sencilla si tus páginas de internet de bajo tráfico están encendidas y funcionando bien.
                     </p>
 
                     @if (Route::has('login'))

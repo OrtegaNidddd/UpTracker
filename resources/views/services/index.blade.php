@@ -66,16 +66,19 @@
             <!-- 1. Tarjetas de Resumen General -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Monitoreados</span>
-                    <p class="text-3xl font-black text-brand-dark mt-2">{{ $totalServices }}</p>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Monitoreados (Máx. 30)</span>
+                    <p class="text-3xl font-black text-brand-dark mt-2">{{ $totalServices }} <span class="text-sm font-semibold text-slate-400">/ 30</span></p>
+                    <span class="text-[11px] text-slate-400">Páginas web de poca afluencia</span>
                 </div>
                 <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80">
                     <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Operativos (Online)</span>
                     <p class="text-3xl font-black text-emerald-600 mt-2">{{ $onlineServices }}</p>
+                    <span class="text-[11px] text-slate-400">Funcionando sin interrupciones</span>
                 </div>
                 <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200/80">
                     <span class="text-xs font-bold uppercase tracking-wider text-rose-600">Caídos o Degradados</span>
                     <p class="text-3xl font-black text-rose-600 mt-2">{{ $offlineServices }}</p>
+                    <span class="text-[11px] text-slate-400">Rendimiento sujeto a la conexión</span>
                 </div>
             </div>
 
