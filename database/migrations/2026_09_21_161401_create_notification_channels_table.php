@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('notification_channels', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->enum('type', ['Email', 'Webhook_Discord', 'Webhook_Telegram']);
+            $table->enum('type', ['Email', 'WhatsApp']);
             $table->string('target_destination');
             $table->boolean('is_active')->default(true);
             $table->timestamps();

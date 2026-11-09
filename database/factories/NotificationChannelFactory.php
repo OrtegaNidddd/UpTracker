@@ -34,19 +34,11 @@ class NotificationChannelFactory extends Factory
         ]);
     }
 
-    public function discord(): static
+    public function whatsapp(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => 'Webhook_Discord',
-            'target_destination' => 'https://discord.com/api/webhooks/'.fake()->numerify('##########/####################'),
-        ]);
-    }
-
-    public function telegram(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'type' => 'Webhook_Telegram',
-            'target_destination' => 'https://api.telegram.org/bot'.fake()->regexify('[0-9]{9}:[a-zA-Z0-9_-]{35}').'/sendMessage',
+            'type' => 'WhatsApp',
+            'target_destination' => '+573'.fake()->numerify('#########'),
         ]);
     }
 
