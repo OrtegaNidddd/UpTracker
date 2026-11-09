@@ -191,4 +191,21 @@ class ServiceApiTest extends TestCase
         $incidentsResponse->assertStatus(200)
             ->assertJsonCount(2, 'data');
     }
+
+    public function test_user_cannot_exceed_thirty_services_limit(): void
+    {
+        $user = User::factory()->create();
+        Service::factory()->count(30)->create(['user_id' => $user->id]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/services', [
+            'name' => 'Página 31 Excedente',
+            'url' => 'https://excedente.test/health',
+            'interval_seconds' => 60,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['url']);
+    }
 }
