@@ -46,6 +46,8 @@ class NotificationChannelApiController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
 
+        $validated['target_destination'] = NotificationChannel::normalizeDestination($validated['type'], (string) $validated['target_destination']);
+
         $channel = $request->user()->notificationChannels()->create($validated);
 
         return (new NotificationChannelResource($channel))
@@ -89,6 +91,11 @@ class NotificationChannelApiController extends Controller
             ],
             'is_active' => ['nullable', 'boolean'],
         ]);
+
+        if (isset($validated['target_destination'])) {
+            $type = $validated['type'] ?? $notificationChannel->type;
+            $validated['target_destination'] = NotificationChannel::normalizeDestination($type, (string) $validated['target_destination']);
+        }
 
         $notificationChannel->update($validated);
 

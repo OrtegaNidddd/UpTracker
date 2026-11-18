@@ -74,6 +74,24 @@ class NotificationChannelWebTest extends TestCase
         ]);
     }
 
+    public function test_user_can_create_whatsapp_channel_with_formatted_phone_number(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('notification-channels.store'), [
+            'type' => 'WhatsApp',
+            'target_destination' => '+57 300 123 4567',
+            'is_active' => '1',
+        ]);
+
+        $response->assertRedirect(route('notification-channels.index'));
+        $this->assertDatabaseHas('notification_channels', [
+            'user_id' => $user->id,
+            'type' => 'WhatsApp',
+            'target_destination' => '+573001234567',
+        ]);
+    }
+
     public function test_user_can_send_live_test_to_channel(): void
     {
         Mail::fake();
