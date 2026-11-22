@@ -47,7 +47,18 @@ class NotificationChannel extends Model
         $trimmed = trim($value);
 
         if ($type === 'WhatsApp' && ! str_starts_with(strtolower($trimmed), 'http://') && ! str_starts_with(strtolower($trimmed), 'https://')) {
-            return (string) preg_replace('/[\s\-\(\)]+/', '', $trimmed);
+            $cleaned = (string) preg_replace('/[\s\-\(\)]+/', '', $trimmed);
+            $digitsOnly = ltrim($cleaned, '+');
+
+            if (preg_match('/^3\d{9}$/', $digitsOnly)) {
+                return "+57{$digitsOnly}";
+            }
+
+            if (preg_match('/^573\d{9}$/', $digitsOnly)) {
+                return "+{$digitsOnly}";
+            }
+
+            return $cleaned;
         }
 
         return $trimmed;
