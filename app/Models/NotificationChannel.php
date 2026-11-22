@@ -28,14 +28,29 @@ class NotificationChannel extends Model
     {
         $trimmed = trim($value);
 
-        // Permite número de teléfono internacional (ej: +573001234567 o 573001234567)
-        if (preg_match('/^\+?[1-9]\d{6,14}$/', $trimmed) === 1) {
-            return true;
+        // O bien endpoint HTTPS/HTTP directo de WhatsApp Cloud API / Meta Graph API
+        if (str_starts_with(strtolower($trimmed), 'http://') || str_starts_with(strtolower($trimmed), 'https://')) {
+            return filter_var($trimmed, FILTER_VALIDATE_URL) !== false;
         }
 
-        // O bien endpoint HTTPS/HTTP directo de WhatsApp Cloud API / Meta Graph API
-        return filter_var($trimmed, FILTER_VALIDATE_URL) !== false
-            && (str_starts_with(strtolower($trimmed), 'http://') || str_starts_with(strtolower($trimmed), 'https://'));
+        $sanitized = preg_replace('/[\s\-\(\)]+/', '', $trimmed);
+
+        // Permite número de teléfono internacional (ej: +573001234567 o 573001234567)
+        return preg_match('/^\+?[1-9]\d{6,14}$/', $sanitized) === 1;
+    }
+
+    /**
+     * Normaliza el destino eliminando espacios, guiones o caracteres de formato en números de WhatsApp.
+     */
+    public static function normalizeDestination(string $type, string $value): string
+    {
+        $trimmed = trim($value);
+
+        if ($type === 'WhatsApp' && ! str_starts_with(strtolower($trimmed), 'http://') && ! str_starts_with(strtolower($trimmed), 'https://')) {
+            return (string) preg_replace('/[\s\-\(\)]+/', '', $trimmed);
+        }
+
+        return $trimmed;
     }
 
     /**

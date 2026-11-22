@@ -51,6 +51,7 @@ class NotificationChannelWebController extends Controller
         ]);
 
         $validated['is_active'] = $request->has('is_active');
+        $validated['target_destination'] = NotificationChannel::normalizeDestination($validated['type'], (string) $validated['target_destination']);
 
         $request->user()->notificationChannels()->create($validated);
 
