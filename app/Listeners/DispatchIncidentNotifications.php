@@ -58,7 +58,13 @@ class DispatchIncidentNotifications implements ShouldQueue
      */
     protected function sendEmail(NotificationChannel $channel, IncidentLogged $event): void
     {
-        Mail::to($channel->target_destination)
+        $defaultMailer = config('mail.default');
+        $smtpUser = config('mail.mailers.smtp.username');
+        $isUnconfiguredSmtp = $defaultMailer === 'smtp' && (empty($smtpUser) || $smtpUser === 'null');
+
+        $mailer = $isUnconfiguredSmtp ? Mail::mailer('log') : Mail::mailer();
+
+        $mailer->to($channel->target_destination)
             ->send(new ServiceAlertMail($event->incident, $event->service));
     }
 
