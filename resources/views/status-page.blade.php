@@ -43,7 +43,7 @@
                     <x-application-logo class="w-8 h-8 transition-transform group-hover:scale-105" />
                     <div>
                         <span class="font-extrabold text-xl text-slate-900 tracking-tight">UpTracker</span>
-                        <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Página de Estado Pública & SLA</span>
+                        <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Página de Estado Pública &amp; SLA</span>
                     </div>
                 </a>
             </div>
@@ -251,9 +251,11 @@
 
     </main>
 
-    <footer class="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-400">
-        <p>&copy; {{ date('Y') }} UpTracker - Sistema de Monitoreo de Endpoints & Análisis de Niveles de Servicio (SLA/SLO).</p>
-    </footer>
+    <!-- Footer Corporativo Público Oficial -->
+    <x-corporate-footer />
+
+    <!-- Banner y Modal de Consentimiento de Políticas y Cookies (Ley 1581) -->
+    <x-cookie-banner />
 
 </body>
 </html>
