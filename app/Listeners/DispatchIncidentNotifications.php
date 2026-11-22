@@ -81,6 +81,17 @@ class DispatchIncidentNotifications implements ShouldQueue
 
         $messageBody = "⚠️ Alerta UpTracker: La página {$service->name} ({$service->url}) presenta estado {$incident->incident_type}. Detalle: {$incident->details}";
 
+        if (str_contains($endpoint, 'ultramsg.com')) {
+            Http::timeout(10)->asForm()->post($endpoint, [
+                'token' => $token,
+                'to' => $channel->target_destination,
+                'body' => $messageBody,
+                'priority' => 10,
+            ]);
+
+            return;
+        }
+
         $payload = [
             'messaging_product' => 'whatsapp',
             'recipient_type' => 'individual',

@@ -27,6 +27,9 @@
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
+        <env name="WHATSAPP_API_URL" value="https://graph.facebook.com/v20.0"/>
+        <env name="WHATSAPP_ACCESS_TOKEN" value="uptracker-whatsapp-token"/>
+        <env name="WHATSAPP_PHONE_NUMBER_ID" value="100000000000000"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>

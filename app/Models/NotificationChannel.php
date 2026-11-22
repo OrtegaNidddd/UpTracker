@@ -75,7 +75,13 @@ class NotificationChannel extends Model
             return $destination;
         }
 
-        $baseUrl = rtrim((string) config('services.whatsapp.api_url', 'https://graph.facebook.com/v20.0'), '/');
+        $apiUrl = (string) config('services.whatsapp.api_url', 'https://graph.facebook.com/v20.0');
+
+        if (str_contains($apiUrl, 'ultramsg.com')) {
+            return $apiUrl;
+        }
+
+        $baseUrl = rtrim($apiUrl, '/');
         $phoneNumberId = (string) config('services.whatsapp.phone_number_id', '100000000000000');
 
         return "{$baseUrl}/{$phoneNumberId}/messages";

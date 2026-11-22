@@ -221,6 +221,17 @@ class SlaService
         $endpoint = $channel->resolveWhatsAppEndpoint();
         $token = (string) config('services.whatsapp.access_token', 'uptracker-whatsapp-token');
 
+        if (str_contains($endpoint, 'ultramsg.com')) {
+            Http::timeout(10)->asForm()->post($endpoint, [
+                'token' => $token,
+                'to' => $channel->target_destination,
+                'body' => $text,
+                'priority' => 10,
+            ]);
+
+            return;
+        }
+
         $payload = [
             'messaging_product' => 'whatsapp',
             'recipient_type' => 'individual',

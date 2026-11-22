@@ -114,27 +114,41 @@ class NotificationChannelWebController extends Controller
                 'Email' => $isUnconfiguredSmtp
                     ? Mail::mailer('log')->to($notificationChannel->target_destination)->send(new ServiceAlertMail($mockIncident, $mockService))
                     : Mail::to($notificationChannel->target_destination)->send(new ServiceAlertMail($mockIncident, $mockService)),
-                'WhatsApp' => Http::timeout(10)
-                    ->withToken((string) config('services.whatsapp.access_token', 'uptracker-whatsapp-token'))
-                    ->asJson()
-                    ->post($notificationChannel->resolveWhatsAppEndpoint(), [
-                        'messaging_product' => 'whatsapp',
+                'WhatsApp' => str_contains($notificationChannel->resolveWhatsAppEndpoint(), 'ultramsg.com')
+                    ? Http::timeout(10)->asForm()->post($notificationChannel->resolveWhatsAppEndpoint(), [
+                        'token' => (string) config('services.whatsapp.access_token', 'uptracker-whatsapp-token'),
                         'to' => $notificationChannel->target_destination,
-                        'type' => 'text',
-                        'text' => [
-                            'body' => '🔔 [PRUEBA UPTRACKER] Conexión exitosa con el canal de avisos por WhatsApp.',
-                        ],
-                        'content' => '🔔 [PRUEBA UPTRACKER] Conexión exitosa con el canal de avisos por WhatsApp.',
-                        'timestamp' => now()->toISOString(),
-                    ]),
+                        'body' => '🔔 [PRUEBA UPTRACKER] Conexión exitosa con el canal de avisos por WhatsApp.',
+                        'priority' => 10,
+                    ])
+                    : Http::timeout(10)
+                        ->withToken((string) config('services.whatsapp.access_token', 'uptracker-whatsapp-token'))
+                        ->asJson()
+                        ->post($notificationChannel->resolveWhatsAppEndpoint(), [
+                            'messaging_product' => 'whatsapp',
+                            'to' => $notificationChannel->target_destination,
+                            'type' => 'text',
+                            'text' => [
+                                'body' => '🔔 [PRUEBA UPTRACKER] Conexión exitosa con el canal de avisos por WhatsApp.',
+                            ],
+                            'content' => '🔔 [PRUEBA UPTRACKER] Conexión exitosa con el canal de avisos por WhatsApp.',
+                            'timestamp' => now()->toISOString(),
+                        ]),
                 default => null,
             };
 
-            if ($notificationChannel->type === 'WhatsApp' && $response instanceof Response && ! $response->successful()) {
-                $err = $response->json('error.error_data.details') ?? $response->json('error.message') ?? 'Error en la API de WhatsApp';
+            if ($notificationChannel->type === 'WhatsApp' && $response instanceof Response) {
+                if (! $response->successful()) {
+                    $err = $response->json('error.error_data.details') ?? $response->json('error.message') ?? $response->json('error') ?? 'Error en la API de WhatsApp';
 
-                return redirect()->route('notification-channels.index')
-                    ->with('error', "No se pudo enviar por WhatsApp: {$err}");
+                    return redirect()->route('notification-channels.index')
+                        ->with('error', "No se pudo enviar por WhatsApp: {$err}");
+                }
+
+                if ($response->json('error')) {
+                    return redirect()->route('notification-channels.index')
+                        ->with('error', "Error en UltraMsg: {$response->json('error')}");
+                }
             }
 
             $successMessage = $notificationChannel->type === 'Email' && $isUnconfiguredSmtp
