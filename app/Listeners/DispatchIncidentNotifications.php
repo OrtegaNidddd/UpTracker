@@ -58,7 +58,13 @@ class DispatchIncidentNotifications implements ShouldQueue
      */
     protected function sendEmail(NotificationChannel $channel, IncidentLogged $event): void
     {
-        Mail::to($channel->target_destination)
+        $defaultMailer = config('mail.default');
+        $smtpUser = config('mail.mailers.smtp.username');
+        $isUnconfiguredSmtp = $defaultMailer === 'smtp' && (empty($smtpUser) || $smtpUser === 'null');
+
+        $mailer = $isUnconfiguredSmtp ? Mail::mailer('log') : Mail::mailer();
+
+        $mailer->to($channel->target_destination)
             ->send(new ServiceAlertMail($event->incident, $event->service));
     }
 
@@ -74,6 +80,17 @@ class DispatchIncidentNotifications implements ShouldQueue
         $token = (string) config('services.whatsapp.access_token', 'uptracker-whatsapp-token');
 
         $messageBody = "⚠️ Alerta UpTracker: La página {$service->name} ({$service->url}) presenta estado {$incident->incident_type}. Detalle: {$incident->details}";
+
+        if (str_contains($endpoint, 'ultramsg.com')) {
+            Http::timeout(10)->asForm()->post($endpoint, [
+                'token' => $token,
+                'to' => $channel->target_destination,
+                'body' => $messageBody,
+                'priority' => 10,
+            ]);
+
+            return;
+        }
 
         $payload = [
             'messaging_product' => 'whatsapp',

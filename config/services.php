@@ -39,6 +39,7 @@ return [
         'api_url' => env('WHATSAPP_API_URL', 'https://graph.facebook.com/v20.0'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID', '100000000000000'),
         'access_token' => env('WHATSAPP_ACCESS_TOKEN', 'uptracker-whatsapp-token'),
+        'instance_id' => env('WHATSAPP_INSTANCE_ID'),
     ],
 
     'uptracker' => [

@@ -47,7 +47,18 @@ class NotificationChannel extends Model
         $trimmed = trim($value);
 
         if ($type === 'WhatsApp' && ! str_starts_with(strtolower($trimmed), 'http://') && ! str_starts_with(strtolower($trimmed), 'https://')) {
-            return (string) preg_replace('/[\s\-\(\)]+/', '', $trimmed);
+            $cleaned = (string) preg_replace('/[\s\-\(\)]+/', '', $trimmed);
+            $digitsOnly = ltrim($cleaned, '+');
+
+            if (preg_match('/^3\d{9}$/', $digitsOnly)) {
+                return "+57{$digitsOnly}";
+            }
+
+            if (preg_match('/^573\d{9}$/', $digitsOnly)) {
+                return "+{$digitsOnly}";
+            }
+
+            return $cleaned;
         }
 
         return $trimmed;
@@ -64,7 +75,13 @@ class NotificationChannel extends Model
             return $destination;
         }
 
-        $baseUrl = rtrim((string) config('services.whatsapp.api_url', 'https://graph.facebook.com/v20.0'), '/');
+        $apiUrl = (string) config('services.whatsapp.api_url', 'https://graph.facebook.com/v20.0');
+
+        if (str_contains($apiUrl, 'ultramsg.com')) {
+            return $apiUrl;
+        }
+
+        $baseUrl = rtrim($apiUrl, '/');
         $phoneNumberId = (string) config('services.whatsapp.phone_number_id', '100000000000000');
 
         return "{$baseUrl}/{$phoneNumberId}/messages";

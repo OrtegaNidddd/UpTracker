@@ -180,7 +180,7 @@ class SlaService
         foreach ($channels as $channel) {
             try {
                 match ($channel->type) {
-                    'Email' => Mail::to($channel->target_destination)->send(new SlaAlertMail($service, $slaData)),
+                    'Email' => $this->sendEmailSlaAlert($channel, $service, $slaData),
                     'WhatsApp' => $this->sendWhatsAppSlaAlert($channel, $service, $slaData),
                     default => null,
                 };
@@ -188,6 +188,20 @@ class SlaService
                 Log::error("Error despachando alerta SLA al canal [{$channel->id}]: {$e->getMessage()}");
             }
         }
+    }
+
+    /**
+     * Envía correo electrónico para alertas SLA con soporte de fallback si SMTP no está configurado.
+     */
+    protected function sendEmailSlaAlert(NotificationChannel $channel, Service $service, array $slaData): void
+    {
+        $defaultMailer = config('mail.default');
+        $smtpUser = config('mail.mailers.smtp.username');
+        $isUnconfiguredSmtp = $defaultMailer === 'smtp' && (empty($smtpUser) || $smtpUser === 'null');
+
+        $mailer = $isUnconfiguredSmtp ? Mail::mailer('log') : Mail::mailer();
+
+        $mailer->to($channel->target_destination)->send(new SlaAlertMail($service, $slaData));
     }
 
     /**
@@ -206,6 +220,17 @@ class SlaService
 
         $endpoint = $channel->resolveWhatsAppEndpoint();
         $token = (string) config('services.whatsapp.access_token', 'uptracker-whatsapp-token');
+
+        if (str_contains($endpoint, 'ultramsg.com')) {
+            Http::timeout(10)->asForm()->post($endpoint, [
+                'token' => $token,
+                'to' => $channel->target_destination,
+                'body' => $text,
+                'priority' => 10,
+            ]);
+
+            return;
+        }
 
         $payload = [
             'messaging_product' => 'whatsapp',
